@@ -1,6 +1,25 @@
 {
 	"comment": "",
 	"ignore": "test",
-	"package": [],
+	"package": [
+		{
+			"checksumSHA1": "2UmMbNHc8FBr98mJFN1k8ISOIHk=",
+			"path": "github.com/garyburd/redigo/internal",
+			"revision": "9e66b83d15a259978be267d0b61838c42c3904e3",
+			"revisionTime": "2017-07-18T22:17:51Z"
+		},
+		{
+			"checksumSHA1": "mb7JV1M7OFsuHlXEPY/LdVBGKVg=",
+			"path": "github.com/garyburd/redigo/redis",
+			"revision": "9e66b83d15a259978be267d0b61838c42c3904e3",
+			"revisionTime": "2017-07-18T22:17:51Z"
+		},
+		{
+			"checksumSHA1": "OMOj4XB082sgH7XsPkVWPk8Kqt0=",
+			"path": "github.com/shomali11/xredis",
+			"revision": "fbd6337c5c2ceabc13440cd3338ad419f15af749",
+			"revisionTime": "2017-07-26T02:47:14Z"
+		}
+	],
 	"rootPath": "github.com/shomali11/fridge"
 }
