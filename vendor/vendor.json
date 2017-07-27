@@ -15,6 +15,78 @@
 			"revisionTime": "2017-07-18T22:17:51Z"
 		},
 		{
+			"checksumSHA1": "aemjNxOhRSmiPj/cuAgc/qFo/eg=",
+			"path": "github.com/shomali11/parallelizer",
+			"revision": "a1053f1f85672158fbd99b9bc0dd3943c9479ecb",
+			"revisionTime": "2017-06-27T04:45:40Z"
+		},
+		{
+			"checksumSHA1": "4fUucDeOr03QppgZdMASYEqJBzg=",
+			"path": "github.com/shomali11/util",
+			"revision": "4f22e46befebd2a316b3c3400bfaff404febd39d",
+			"revisionTime": "2017-07-27T00:40:33Z"
+		},
+		{
+			"checksumSHA1": "yGj20Tdh4lWA0Cc9QHU4zf4vjcw=",
+			"path": "github.com/shomali11/util/calculations",
+			"revision": "4f22e46befebd2a316b3c3400bfaff404febd39d",
+			"revisionTime": "2017-07-27T00:40:33Z"
+		},
+		{
+			"checksumSHA1": "iM9hP+HbZJFeF1zi/uFWp8wFhq0=",
+			"path": "github.com/shomali11/util/compressions",
+			"revision": "4f22e46befebd2a316b3c3400bfaff404febd39d",
+			"revisionTime": "2017-07-27T00:40:33Z"
+		},
+		{
+			"checksumSHA1": "RycSLpmjK2c//LpuSPeBIuocgec=",
+			"path": "github.com/shomali11/util/concurrency",
+			"revision": "4f22e46befebd2a316b3c3400bfaff404febd39d",
+			"revisionTime": "2017-07-27T00:40:33Z"
+		},
+		{
+			"checksumSHA1": "SS6yw1wVQhWHxLkBsbDtj7lewPI=",
+			"path": "github.com/shomali11/util/conditions",
+			"revision": "4f22e46befebd2a316b3c3400bfaff404febd39d",
+			"revisionTime": "2017-07-27T00:40:33Z"
+		},
+		{
+			"checksumSHA1": "FVIMOtpjZtdlagTq1v+qfpghIOA=",
+			"path": "github.com/shomali11/util/conversions",
+			"revision": "4f22e46befebd2a316b3c3400bfaff404febd39d",
+			"revisionTime": "2017-07-27T00:40:33Z"
+		},
+		{
+			"checksumSHA1": "3CoLyIqnek53hgCvSwqAtV52WDA=",
+			"path": "github.com/shomali11/util/errors",
+			"revision": "4f22e46befebd2a316b3c3400bfaff404febd39d",
+			"revisionTime": "2017-07-27T00:40:33Z"
+		},
+		{
+			"checksumSHA1": "ktGev9fk/TcrdSBzzmiKK1okHFw=",
+			"path": "github.com/shomali11/util/hashes",
+			"revision": "4f22e46befebd2a316b3c3400bfaff404febd39d",
+			"revisionTime": "2017-07-27T00:40:33Z"
+		},
+		{
+			"checksumSHA1": "WGPXdzf6WyC4mH2tEIeFNJQTAUQ=",
+			"path": "github.com/shomali11/util/manipulations",
+			"revision": "4f22e46befebd2a316b3c3400bfaff404febd39d",
+			"revisionTime": "2017-07-27T00:40:33Z"
+		},
+		{
+			"checksumSHA1": "yPgVsVXfvWaOgDZn6rS9sNHFwWQ=",
+			"path": "github.com/shomali11/util/runes",
+			"revision": "4f22e46befebd2a316b3c3400bfaff404febd39d",
+			"revisionTime": "2017-07-27T00:40:33Z"
+		},
+		{
+			"checksumSHA1": "Ck1mlRFavsJlx2Gt/NB97Gy1Mqs=",
+			"path": "github.com/shomali11/util/strings",
+			"revision": "4f22e46befebd2a316b3c3400bfaff404febd39d",
+			"revisionTime": "2017-07-27T00:40:33Z"
+		},
+		{
 			"checksumSHA1": "OMOj4XB082sgH7XsPkVWPk8Kqt0=",
 			"path": "github.com/shomali11/xredis",
 			"revision": "fbd6337c5c2ceabc13440cd3338ad419f15af749",
