@@ -27,7 +27,7 @@ When attempting to retrieve a value from the fridge _(cache)_, there are multipl
 The thinking behind `fridge` is to increase the chances for a value to be retrieved from the cache.
 The longer the value stays in the cache, the better the chances are to retrieve it faster from the cache than the database. 
 
-The challenge of course is to keep the value in the cache "fresh".
+The challenge, of course, is to keep the value in the cache "fresh".
 
 ## Usage
 
