@@ -15,7 +15,6 @@ func main() {
 	}
 
 	fmt.Println(client.Register("name", time.Second, 2*time.Second))
-
 	fmt.Println(client.Put("name", "Raed Shomali"))
 	fmt.Println(client.Get("name", restock))
 
@@ -27,6 +26,5 @@ func main() {
 
 	fmt.Println(client.Get("name", restock))
 	fmt.Println(client.Remove("name"))
-
 	fmt.Println(client.Deregister("name"))
 }

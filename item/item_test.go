@@ -1,9 +1,9 @@
 package item
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestNewConfig(t *testing.T) {
