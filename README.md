@@ -10,10 +10,11 @@ With `fridge`, we are taking a slightly different approach.
 Before storing a value in the fridge (cache), one must register its key with a "Best By" and a "Use By" durations.
 When retrieving the value from the fridge (cache), a "restock" function can be provided to refresh the value.
 
-The idea is when one attempts to retrieve a value from the fridge (cache), if the item has not passed its "Best By" duration (it is "fresh"), then the item is returned immediately.
-If the item has passed its "Best By" duration but not its "Use By" duration (Not "fresh" but not "expired" either), then the item is returned immediately but the "restock" function is called in a separate go-routine to "refresh" the item in the background.
-If the item has passed its "Use By" duration (it has "expired"), the "restock" function is called to retrieve a fresh item and return it.
-If the item was not found, it is treated similarly to an expired item and the "restock" function is called to retrieve a fresh item and return it.
+The idea is when one attempts to retrieve a value from the fridge (cache), there are multiple scenarios that could happen:
+ * If the item has not passed its "Best By" duration (it is "fresh"), then the item is returned immediately.
+ * If the item has passed its "Best By" duration but not its "Use By" duration (Not "fresh" but not "expired" either), then the item is returned immediately but the "restock" function is called in a separate go-routine to "refresh" the item in the background.
+ * If the item has passed its "Use By" duration (it has "expired"), the "restock" function is called to retrieve a fresh item and return it.
+ * If the item was not found, it is treated similarly to an expired item and the "restock" function is called to retrieve a fresh item and return it.
 
 ## Usage
 
