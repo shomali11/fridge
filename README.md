@@ -22,6 +22,13 @@ When attempting to retrieve a value from the fridge _(cache)_, there are multipl
    * It is treated similarly to an expired item
    * The "restock" function is called **synchronously** to retrieve a fresh item and return it.
 
+## Why?
+
+The thinking behind `fridge` is to increase the chances for a value to be retrieved from the cache.
+The longer the value stays in the cache, the better the chances are to retrieve it faster from the cache than the database. 
+
+The challenge of course is to keep the value in the cache "fresh".
+
 ## Usage
 
 Using `govendor` [github.com/kardianos/govendor](https://github.com/kardianos/govendor):
