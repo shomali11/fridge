@@ -14,3 +14,158 @@ govendor fetch github.com/shomali11/fridge
 
 * `xredis` [github.com/shomali11/xredis](https://github.com/shomali11/xredis)
 * `util` [github.com/shomali11/util](https://github.com/shomali11/util)
+
+
+# Examples
+
+## Example 1
+
+Using `DefaultClient` to create a client with default options
+
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/shomali11/fridge"
+)
+
+func main() {
+	client := fridge.DefaultClient()
+	defer client.Close()
+
+	fmt.Println(client.Ping()) // <nil>
+}
+```
+
+List of default options
+
+```text
+defaultHost                  = "localhost"
+defaultPort                  = 6379
+defaultPassword              = ""
+defaultDatabase              = 0
+defaultNetwork               = "tcp"
+defaultConnectTimeout        = time.Second
+defaultWriteTimeout          = time.Second
+defaultReadTimeout           = time.Second
+defaultConnectionIdleTimeout = 240 * time.Second
+defaultConnectionMaxIdle     = 100
+defaultConnectionMaxActive   = 10000
+defaultConnectionWait        = false
+defaultTlsConfig             = nil
+defaultTlsSkipVerify         = false
+defaultTestOnBorrowTimeout   = time.Minute
+```
+
+## Example 2
+
+Using `SetupClient` to create a client using provided options
+
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/shomali11/fridge"
+	"github.com/shomali11/xredis"
+)
+
+func main() {
+	options := &xredis.Options{
+		Host: "localhost",
+		Port: 6379,
+	}
+
+	client := fridge.SetupClient(options)
+	defer client.Close()
+
+	fmt.Println(client.Ping()) // <nil>
+}
+```
+
+Available options to set
+
+```go
+type Options struct {
+	Host                  string
+	Port                  int
+	Password              string
+	Database              int
+	Network               string
+	ConnectTimeout        time.Duration
+	WriteTimeout          time.Duration
+	ReadTimeout           time.Duration
+	ConnectionIdleTimeout time.Duration
+	ConnectionMaxIdle     int
+	ConnectionMaxActive   int
+	ConnectionWait        bool
+	TlsConfig             *tls.Config
+	TlsSkipVerify         bool
+	TestOnBorrowPeriod    time.Duration
+}
+```
+
+## Example 3
+
+Using `NewClient` to create a client using `redigo`'s `redis.Pool`
+
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/garyburd/redigo/redis"
+	"github.com/shomali11/fridge"
+)
+
+func main() {
+	pool := &redis.Pool{
+		Dial: func() (redis.Conn, error) {
+			return redis.Dial("tcp", "localhost:6379")
+		},
+	}
+
+	client := fridge.NewClient(pool)
+	defer client.Close()
+
+	fmt.Println(client.Ping()) // <nil>
+}
+```
+
+## Example 4
+
+Using the `Register`, `Put`, `Get`, `Remove` & `Deregister` to show how to register, put, get remove and deregister an item
+
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/shomali11/fridge"
+	"time"
+)
+
+func main() {
+	client := fridge.DefaultClient()
+	defer client.Close()
+
+	restock := func() (string, error) {
+		return "Awesome", nil
+	}
+
+	fmt.Println(client.Register("name", time.Second, 2*time.Second)) // <nil>
+	fmt.Println(client.Put("name", "Raed Shomali"))                  // <nil>
+	fmt.Println(client.Get("name", restock))                         // "Raed Shomali" true <nil>
+
+	time.Sleep(time.Second)
+
+	fmt.Println(client.Get("name", restock))                         // "Raed Shomali" true <nil>
+
+	time.Sleep(2 * time.Second)
+
+	fmt.Println(client.Get("name", restock))                         // "Awesome" true <nil>
+	fmt.Println(client.Remove("name"))                               // <nil>
+	fmt.Println(client.Deregister("name"))                           // <nil>
+}
+```
