@@ -178,21 +178,21 @@ func main() {
 	defer client.Close()
 
 	restock := func() (string, error) {
-		return "Awesome", nil
+		return "Hot Pizza", nil
 	}
 
-	fmt.Println(client.Register("name", time.Second, 2*time.Second)) // <nil>
-	fmt.Println(client.Put("name", "Raed Shomali"))                  // <nil>
-	fmt.Println(client.Get("name", restock))                         // "Raed Shomali" true <nil>
+	fmt.Println(client.Register("food", time.Second, 2*time.Second)) // <nil>
+	fmt.Println(client.Put("food", "Raed Shomali"))                  // <nil>
+	fmt.Println(client.Get("food", restock))                         // "Pizza" true <nil>
 
 	time.Sleep(time.Second)
 
-	fmt.Println(client.Get("name", restock))                         // "Raed Shomali" true <nil>
+	fmt.Println(client.Get("food", restock))                         // "Pizza" true <nil>
 
 	time.Sleep(2 * time.Second)
 
-	fmt.Println(client.Get("name", restock))                         // "Awesome" true <nil>
-	fmt.Println(client.Remove("name"))                               // <nil>
-	fmt.Println(client.Deregister("name"))                           // <nil>
+	fmt.Println(client.Get("food", restock))                         // "Hot Pizza" true <nil>
+	fmt.Println(client.Remove("food"))                               // <nil>
+	fmt.Println(client.Deregister("food"))                           // <nil>
 }
 ```

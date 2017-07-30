@@ -11,20 +11,20 @@ func main() {
 	defer client.Close()
 
 	restock := func() (string, error) {
-		return "Awesome", nil
+		return "Hot Pizza", nil
 	}
 
-	fmt.Println(client.Register("name", time.Second, 2*time.Second))
-	fmt.Println(client.Put("name", "Raed Shomali"))
-	fmt.Println(client.Get("name", restock))
+	fmt.Println(client.Register("food", time.Second, 2*time.Second))
+	fmt.Println(client.Put("food", "Pizza"))
+	fmt.Println(client.Get("food", restock))
 
 	time.Sleep(time.Second)
 
-	fmt.Println(client.Get("name", restock))
+	fmt.Println(client.Get("food", restock))
 
 	time.Sleep(2 * time.Second)
 
-	fmt.Println(client.Get("name", restock))
-	fmt.Println(client.Remove("name"))
-	fmt.Println(client.Deregister("name"))
+	fmt.Println(client.Get("food", restock))
+	fmt.Println(client.Remove("food"))
+	fmt.Println(client.Deregister("food"))
 }
