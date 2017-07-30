@@ -7,14 +7,20 @@ The value could be retrieved from the cache as long as it has not expired.
 If the value had expired, then a database call is usually made to retrieve the value, put it back in the cache and return it.
 
 With `fridge`, we are taking a slightly different approach.
-Before storing a value in the fridge (cache), one must register its key with a "Best By" and a "Use By" durations.
-When retrieving the value from the fridge (cache), a "restock" function can be provided to refresh the value.
+Before storing a value in the fridge _(cache)_, one must register its key with a "Best By" and a "Use By" durations.
+When retrieving the value from the fridge _(cache)_, a "restock" function can be provided to refresh the value.
 
-When attempting to retrieve a value from the fridge (cache), there are multiple scenarios that could happen:
- * If the item has not passed its "Best By" duration (it is "fresh"), then the item is returned immediately.
- * If the item has passed its "Best By" duration but not its "Use By" duration (Not "fresh" but not "expired" either), then the item is returned immediately but the "restock" function is called in a separate go-routine to "refresh" the item in the background.
- * If the item has passed its "Use By" duration (it has "expired"), the "restock" function is called to retrieve a fresh item and return it.
- * If the item was not found, it is treated similarly to an expired item and the "restock" function is called to retrieve a fresh item and return it.
+When attempting to retrieve a value from the fridge _(cache)_, there are multiple scenarios that could happen:
+ * If the item has not passed its "Best By" duration _(it is "fresh")_
+   * Then the item is returned immediately.
+ * If the item has passed its "Best By" duration but not its "Use By" duration _(Not "fresh" but not "expired" either)_
+   * Then the item is returned immediately 
+   * But the "restock" function is called **asynchronously** to "refresh" the item.
+ * If the item has passed its "Use By" duration _(it has "expired")_
+   * The "restock" function is called **synchronously** to retrieve a fresh item and return it.
+ * If the item was not found
+   * It is treated similarly to an expired item
+   * The "restock" function is called **synchronously** to retrieve a fresh item and return it.
 
 ## Usage
 
