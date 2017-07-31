@@ -29,17 +29,22 @@ func main() {
 		return "Hot Pizza", nil
 	}
 
-	client.Register("food", time.Second, 2*time.Second)
-	client.Put("food", "Pizza")
-	client.Get("food", restock)
+	client.Register("food1", time.Second, 2*time.Second)
+	client.Register("food2", time.Second, 2*time.Second)
+
+	client.Put("food1", "Pizza")
+	client.Get("food1", restock)
+	client.Get("food2", nil)
 
 	time.Sleep(time.Second)
 
-	client.Get("food", restock)
+	client.Get("food1", restock)
 
 	time.Sleep(2 * time.Second)
 
-	client.Get("food", restock)
-	client.Remove("food")
-	client.Deregister("food")
+	client.Get("food1", restock)
+	client.Remove("food1")
+
+	client.Deregister("food1")
+	client.Deregister("food2")
 }

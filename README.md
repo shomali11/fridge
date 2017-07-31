@@ -215,36 +215,54 @@ func main() {
 	defer client.Close()
 
 	client.HandleEvent(func(event *fridge.Event) {
-		fmt.Println(event)
+		fmt.Println("Key: " + event.Key)
+
+		switch event.Type {
+		case fridge.Fresh:
+			fmt.Println("Woohoo! it is fresh!")
+		case fridge.Cold:
+			fmt.Println("Not fresh! But not bad either!")
+		case fridge.Miss:
+			fmt.Println("Oops! Did not find it!")
+		case fridge.Expired:
+			fmt.Println("Sigh. It has expired!")
+		}
 	})
 
 	restock := func() (string, error) {
 		return "Hot Pizza", nil
 	}
 
-	fmt.Println(client.Register("food", time.Second, 2*time.Second))
-	fmt.Println(client.Put("food", "Pizza"))
-	fmt.Println(client.Get("food", restock))
+	client.Register("food1", time.Second, 2*time.Second)
+	client.Register("food2", time.Second, 2*time.Second)
+
+	client.Put("food1", "Pizza")
+	client.Get("food1", restock)
+	client.Get("food2", nil)
 
 	time.Sleep(time.Second)
 
-	fmt.Println(client.Get("food", restock))
+	client.Get("food1", restock)
 
 	time.Sleep(2 * time.Second)
 
-	fmt.Println(client.Get("food", restock))
-	fmt.Println(client.Remove("food"))
-	fmt.Println(client.Deregister("food"))
+	client.Get("food1", restock)
+	client.Remove("food1")
+
+	client.Deregister("food1")
+	client.Deregister("food2")
 }
 ```
 
 Output:
 
 ```
-Key: food
+Key: food1
 Woohoo! it is fresh!
-Key: food
-Not fresh! But not bad either!
-Key: food
+Key: food2
 Oops! Did not find it!
+Key: food1
+Not fresh! But not bad either!
+Key: food1
+Sigh. It has expired!
 ```

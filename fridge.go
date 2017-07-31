@@ -109,7 +109,12 @@ func (c *Client) Get(key string, restock func() (string, error)) (string, bool, 
 	}
 
 	if !ok {
-		go c.publish(key, Miss)
+		if itemConfig.StockTimestamp.IsZero() {
+			go c.publish(key, Miss)
+		} else {
+			go c.publish(key, Expired)
+		}
+
 		return c.callRestock(itemConfig, restock)
 	}
 
