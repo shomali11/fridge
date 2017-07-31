@@ -196,3 +196,59 @@ func main() {
 	fmt.Println(client.Deregister("food"))                           // <nil>
 }
 ```
+
+## Example 5
+
+Using the `HandleEvent` to pass a callback to access the stream of events generated
+
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/shomali11/fridge"
+	"time"
+)
+
+func main() {
+	client := fridge.DefaultClient()
+	defer client.Close()
+
+	client.HandleEvent(func(event *fridge.Event) {
+		fmt.Println(event)
+	})
+
+	restock := func() (string, error) {
+		return "Hot Pizza", nil
+	}
+
+	fmt.Println(client.Register("food", time.Second, 2*time.Second))
+	fmt.Println(client.Put("food", "Pizza"))
+	fmt.Println(client.Get("food", restock))
+
+	time.Sleep(time.Second)
+
+	fmt.Println(client.Get("food", restock))
+
+	time.Sleep(2 * time.Second)
+
+	fmt.Println(client.Get("food", restock))
+	fmt.Println(client.Remove("food"))
+	fmt.Println(client.Deregister("food"))
+}
+```
+
+Output:
+
+```
+<nil>
+<nil>
+Pizza true <nil>
+&{food FRESH}
+Pizza true <nil>
+&{food COLD}
+&{food MISS}
+Hot Pizza true <nil>
+<nil>
+<nil>
+```

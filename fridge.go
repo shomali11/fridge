@@ -11,32 +11,51 @@ import (
 )
 
 const (
+	Fresh   = "FRESH"
+	Cold    = "COLD"
+	Miss    = "MISS"
+	Expired = "EXPIRED"
+)
+
+const (
 	unregisteredItemFormat = "Unregistered item '%s'"
 	itemConfigKeyFormat    = "%s.config"
 	empty                  = ""
 )
 
+const (
+	eventsBuffer = 1000
+)
+
 // DefaultClient returns a client with default options
 func DefaultClient() *Client {
 	client := xredis.DefaultClient()
-	return &Client{xredisClient: client}
+	return newClient(client)
 }
 
 // SetupClient returns a client with provided options
 func SetupClient(options *xredis.Options) *Client {
 	client := xredis.SetupClient(options)
-	return &Client{xredisClient: client}
+	return newClient(client)
 }
 
 // NewClient returns a client using provided redis.Pool
 func NewClient(pool *redis.Pool) *Client {
 	client := xredis.NewClient(pool)
-	return &Client{xredisClient: client}
+	return newClient(client)
+}
+
+// Event contains information about an event
+type Event struct {
+	Key  string
+	Type string
 }
 
 // Client fridge client
 type Client struct {
 	xredisClient *xredis.Client
+	events       chan *Event
+	handleEvent  func(event *Event)
 }
 
 // Register an item
@@ -90,18 +109,23 @@ func (c *Client) Get(key string, restock func() (string, error)) (string, bool, 
 	}
 
 	if !ok {
+		go c.publish(key, Miss)
 		return c.callRestock(itemConfig, restock)
 	}
 
 	now := time.Now().UTC()
 	if now.Before(itemConfig.StockTimestamp.Add(itemConfig.BestBy)) {
+		go c.publish(key, Fresh)
 		return value, true, nil
 	}
 
 	if now.Before(itemConfig.StockTimestamp.Add(itemConfig.UseBy)) {
+		go c.publish(key, Cold)
 		go c.callRestock(itemConfig, restock)
 		return value, true, nil
 	}
+
+	go c.publish(key, Expired)
 	return c.callRestock(itemConfig, restock)
 }
 
@@ -127,6 +151,15 @@ func (c *Client) Ping() error {
 // Close closes resources
 func (c *Client) Close() error {
 	return c.xredisClient.Close()
+}
+
+// HandleEvent overrides the default handleEvent callback
+func (c *Client) HandleEvent(handleEvent func(event *Event)) {
+	c.handleEvent = handleEvent
+}
+
+func (c *Client) publish(key string, status string) {
+	c.events <- &Event{Key: key, Type: status}
 }
 
 func (c *Client) callRestock(itemConfig *item.Config, restock func() (string, error)) (string, bool, error) {
@@ -177,4 +210,21 @@ func (c *Client) retrieveItemConfig(key string) (*item.Config, error) {
 		return nil, err
 	}
 	return &itemConfig, nil
+}
+
+func newClient(xredisClient *xredis.Client) *Client {
+	events := make(chan *Event, eventsBuffer)
+	client := &Client{xredisClient: xredisClient, events: events}
+
+	go func() {
+		for event := range events {
+			if client.handleEvent == nil {
+				continue
+			}
+
+			client.handleEvent(event)
+		}
+	}()
+
+	return client
 }
