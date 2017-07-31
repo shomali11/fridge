@@ -11,10 +11,23 @@ import (
 )
 
 const (
-	Fresh   = "FRESH"
-	Cold    = "COLD"
-	Miss    = "MISS"
+	// Fresh is when an item has not passed its "Best By" duration
+	Fresh = "FRESH"
+
+	// Cold is when an item has passed its "Best By" duration but not its "Use By" one
+	Cold = "COLD"
+
+	// Expird is when an item has passed its "Use By" duration
 	Expired = "EXPIRED"
+
+	// NotFound is when an item was never stored before
+	NotFound = "NOT_FOUND"
+
+	// Refresh is when an item was restocked with a fresher one
+	Refresh = "REFRESH"
+
+	// OutOfStock is when an item needs restocking, but no restocking function was provided
+	OutOfStock = "OUT_OF_STOCK"
 )
 
 const (
@@ -103,18 +116,17 @@ func (c *Client) Get(key string, restock func() (string, error)) (string, bool, 
 		return empty, false, err
 	}
 
-	value, ok, err := c.xredisClient.Get(key)
+	value, found, err := c.xredisClient.Get(key)
 	if err != nil {
 		return empty, false, err
 	}
 
-	if !ok {
+	if !found {
 		if itemConfig.StockTimestamp.IsZero() {
-			go c.publish(key, Miss)
+			go c.publish(key, NotFound)
 		} else {
 			go c.publish(key, Expired)
 		}
-
 		return c.callRestock(itemConfig, restock)
 	}
 
@@ -169,6 +181,7 @@ func (c *Client) publish(key string, status string) {
 
 func (c *Client) callRestock(itemConfig *item.Config, restock func() (string, error)) (string, bool, error) {
 	if restock == nil {
+		go c.publish(itemConfig.Key, OutOfStock)
 		return empty, false, nil
 	}
 
@@ -177,6 +190,7 @@ func (c *Client) callRestock(itemConfig *item.Config, restock func() (string, er
 		return empty, false, err
 	}
 
+	go c.publish(itemConfig.Key, Refresh)
 	err = c.Put(itemConfig.Key, result)
 	if err != nil {
 		return empty, false, err
