@@ -241,14 +241,10 @@ func main() {
 Output:
 
 ```
-<nil>
-<nil>
-Pizza true <nil>
-&{food FRESH}
-Pizza true <nil>
-&{food COLD}
-&{food MISS}
-Hot Pizza true <nil>
-<nil>
-<nil>
+Key: food
+Woohoo! it is fresh!
+Key: food
+Not fresh! But not bad either!
+Key: food
+Oops! Did not find it!
 ```
