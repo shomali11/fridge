@@ -14,7 +14,7 @@ const (
 	// Cold is when an item has passed its "Best By" duration but not its "Use By" one
 	Cold = "COLD"
 
-	// Expird is when an item has passed its "Use By" duration
+	// Expired is when an item has passed its "Use By" duration
 	Expired = "EXPIRED"
 
 	// NotFound is when an item was never stored before
