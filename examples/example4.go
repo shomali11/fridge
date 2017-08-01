@@ -28,6 +28,4 @@ func main() {
 
 	fmt.Println(client.Get("food"))
 	fmt.Println(client.Remove("food"))
-
-	client.Deregister("food")
 }
