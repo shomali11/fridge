@@ -22,18 +22,61 @@ type Dao struct {
 }
 
 // Get retrieves an item
-func (d *Dao) Get(key string) (string, bool, error) {
-	return d.xredisClient.Get(key)
+func (d *Dao) Get(key string) (string, bool, time.Time, error) {
+	value, found, err := d.xredisClient.Get(key)
+	if err != nil {
+		return value, found, time.Time{}, err
+	}
+
+	timestamp, err := d.getTimestamp(key)
+	if err != nil {
+		return value, found, time.Time{}, err
+	}
+	return value, found, timestamp, nil
 }
 
 // Set stores a value
 func (d *Dao) Set(key string, value string, timeout int64) error {
 	_, err := d.xredisClient.SetEx(key, value, timeout)
+	if err != nil {
+		return err
+	}
+	return d.setTimestamp(key, time.Now().UTC())
+}
+
+// Remove an item
+func (d *Dao) Remove(key string) error {
+	timestampKey := fmt.Sprintf(timestampKeyFormat, key)
+	_, err := d.xredisClient.Del(key, timestampKey)
 	return err
 }
 
-// GetTimestamp retrieves when an item was stocked
-func (d *Dao) GetTimestamp(key string) (time.Time, error) {
+// Ping pings redis
+func (d *Dao) Ping() error {
+	_, err := d.xredisClient.Ping()
+	return err
+}
+
+// Close closes resources
+func (d *Dao) Close() error {
+	return d.xredisClient.Close()
+}
+
+func (d *Dao) setTimestamp(key string, timestamp time.Time) error {
+	timestampString, err := conversions.Stringify(timestamp)
+	if err != nil {
+		return err
+	}
+
+	timestampKey := fmt.Sprintf(timestampKeyFormat, key)
+	_, err = d.xredisClient.Set(timestampKey, timestampString)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *Dao) getTimestamp(key string) (time.Time, error) {
 	timestampKey := fmt.Sprintf(timestampKeyFormat, key)
 	timestampString, found, err := d.xredisClient.Get(timestampKey)
 	if err != nil {
@@ -50,36 +93,4 @@ func (d *Dao) GetTimestamp(key string) (time.Time, error) {
 		return time.Time{}, err
 	}
 	return timestamp, nil
-}
-
-// SetTimestamp stores a new timestamp for the value
-func (d *Dao) SetTimestamp(key string, timestamp time.Time) error {
-	timestampString, err := conversions.Stringify(timestamp)
-	if err != nil {
-		return err
-	}
-
-	timestampKey := fmt.Sprintf(timestampKeyFormat, key)
-	_, err = d.xredisClient.Set(timestampKey, timestampString)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// Remove an item
-func (d *Dao) Remove(key string) error {
-	_, err := d.xredisClient.Del(key)
-	return err
-}
-
-// Ping pings redis
-func (d *Dao) Ping() error {
-	_, err := d.xredisClient.Ping()
-	return err
-}
-
-// Close closes resources
-func (d *Dao) Close() error {
-	return d.xredisClient.Close()
 }

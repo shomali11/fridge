@@ -83,7 +83,7 @@ func (c *Client) Put(key string, value string) error {
 	if err != nil {
 		return err
 	}
-	return c.itemDao.SetTimestamp(key, time.Now().UTC())
+	return nil
 }
 
 // Get an item
@@ -93,12 +93,7 @@ func (c *Client) Get(key string) (string, bool, error) {
 		return empty, false, err
 	}
 
-	value, found, err := c.itemDao.Get(key)
-	if err != nil {
-		return empty, false, err
-	}
-
-	stockTimestamp, err := c.itemDao.GetTimestamp(key)
+	value, found, stockTimestamp, err := c.itemDao.Get(key)
 	if err != nil {
 		return empty, false, err
 	}
