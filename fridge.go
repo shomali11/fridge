@@ -31,10 +31,6 @@ const (
 	empty = ""
 )
 
-const (
-	eventsBuffer = 1000
-)
-
 // DefaultClient returns a client with default options
 func DefaultClient() *Client {
 	client := xredis.DefaultClient()
@@ -53,18 +49,11 @@ func NewClient(pool *redis.Pool) *Client {
 	return newClient(client)
 }
 
-// Event contains information about an event
-type Event struct {
-	Key  string
-	Type string
-}
-
 // Client fridge client
 type Client struct {
 	itemRegistry *item.Registry
 	itemDao      *item.Dao
-	events       chan *Event
-	handleEvent  func(event *Event)
+	eventBus     *EventBus
 }
 
 // Register an item
@@ -156,11 +145,11 @@ func (c *Client) Close() error {
 
 // HandleEvent overrides the default handleEvent callback
 func (c *Client) HandleEvent(handleEvent func(event *Event)) {
-	c.handleEvent = handleEvent
+	c.eventBus.HandleEvent(handleEvent)
 }
 
-func (c *Client) publish(key string, status string) {
-	c.events <- &Event{Key: key, Type: status}
+func (c *Client) publish(key string, eventType string) {
+	c.eventBus.Publish(key, eventType)
 }
 
 func (c *Client) callRestock(itemConfig *item.Config) (string, bool, error) {
@@ -183,25 +172,10 @@ func (c *Client) callRestock(itemConfig *item.Config) (string, bool, error) {
 }
 
 func newClient(xredisClient *xredis.Client) *Client {
-	events := make(chan *Event, eventsBuffer)
-	itemRegistry := item.NewRegistry()
-	itemDao := item.NewDao(xredisClient)
-
 	client := &Client{
-		itemRegistry: itemRegistry,
-		itemDao:      itemDao,
-		events:       events,
+		itemRegistry: item.NewRegistry(),
+		itemDao:      item.NewDao(xredisClient),
+		eventBus:     NewEventBus(),
 	}
-
-	go func() {
-		for event := range events {
-			if client.handleEvent == nil {
-				continue
-			}
-
-			client.handleEvent(event)
-		}
-	}()
-
 	return client
 }
