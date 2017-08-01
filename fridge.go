@@ -1,11 +1,8 @@
 package fridge
 
 import (
-	"errors"
-	"fmt"
 	"github.com/garyburd/redigo/redis"
 	"github.com/shomali11/fridge/item"
-	"github.com/shomali11/util/conversions"
 	"github.com/shomali11/xredis"
 	"time"
 )
@@ -31,9 +28,7 @@ const (
 )
 
 const (
-	unregisteredItemFormat = "Unregistered item '%s'"
-	itemConfigKeyFormat    = "%s.config"
-	empty                  = ""
+	empty = ""
 )
 
 const (
@@ -66,108 +61,97 @@ type Event struct {
 
 // Client fridge client
 type Client struct {
-	xredisClient *xredis.Client
+	itemRegistry *item.Registry
+	itemDao      *item.Dao
 	events       chan *Event
 	handleEvent  func(event *Event)
 }
 
 // Register an item
-func (c *Client) Register(key string, bestBy time.Duration, useBy time.Duration) error {
-	itemConfig, err := item.NewConfig(key, bestBy, useBy)
+func (c *Client) Register(key string, bestBy time.Duration, useBy time.Duration, options ...item.ConfigOption) error {
+	itemConfig, err := item.NewConfig(key, bestBy, useBy, options...)
 	if err != nil {
 		return err
 	}
 
-	itemConfigKey := fmt.Sprintf(itemConfigKeyFormat, key)
-	itemConfigString, err := conversions.Stringify(itemConfig)
-	if err != nil {
-		return err
-	}
+	c.itemRegistry.Set(itemConfig)
+	return nil
+}
 
-	_, err = c.xredisClient.Set(itemConfigKey, itemConfigString)
-	return err
+// Deregister an item
+func (c *Client) Deregister(key string) {
+	c.itemRegistry.Remove(key)
 }
 
 // Put an item
 func (c *Client) Put(key string, value string) error {
-	itemConfig, err := c.retrieveItemConfig(key)
+	itemConfig, err := c.itemRegistry.Get(key)
 	if err != nil {
 		return err
 	}
 
-	useByInSeconds := int64(itemConfig.UseBy.Seconds())
-	_, err = c.xredisClient.SetEx(key, value, useByInSeconds)
+	err = c.itemDao.Set(key, value, itemConfig.GetUseByInSeconds())
 	if err != nil {
 		return err
 	}
-
-	itemConfig.StockTimestamp = time.Now().UTC()
-	err = c.saveItemInfo(itemConfig)
-	if err != nil {
-		return err
-	}
-	return nil
+	return c.itemDao.SetTimestamp(key, time.Now().UTC())
 }
 
 // Get an item
-func (c *Client) Get(key string, restock func() (string, error)) (string, bool, error) {
-	itemConfig, err := c.retrieveItemConfig(key)
+func (c *Client) Get(key string) (string, bool, error) {
+	itemConfig, err := c.itemRegistry.Get(key)
 	if err != nil {
 		return empty, false, err
 	}
 
-	value, found, err := c.xredisClient.Get(key)
+	value, found, err := c.itemDao.Get(key)
+	if err != nil {
+		return empty, false, err
+	}
+
+	stockTimestamp, err := c.itemDao.GetTimestamp(key)
 	if err != nil {
 		return empty, false, err
 	}
 
 	if !found {
-		if itemConfig.StockTimestamp.IsZero() {
+		if stockTimestamp.IsZero() {
 			go c.publish(key, NotFound)
 		} else {
 			go c.publish(key, Expired)
 		}
-		return c.callRestock(itemConfig, restock)
+		return c.callRestock(itemConfig)
 	}
 
 	now := time.Now().UTC()
-	if now.Before(itemConfig.StockTimestamp.Add(itemConfig.BestBy)) {
+	if now.Before(stockTimestamp.Add(itemConfig.BestBy)) {
 		go c.publish(key, Fresh)
 		return value, true, nil
 	}
 
-	if now.Before(itemConfig.StockTimestamp.Add(itemConfig.UseBy)) {
+	if now.Before(stockTimestamp.Add(itemConfig.UseBy)) {
 		go c.publish(key, Cold)
-		go c.callRestock(itemConfig, restock)
+		go c.callRestock(itemConfig)
 		return value, true, nil
 	}
 
 	go c.publish(key, Expired)
-	return c.callRestock(itemConfig, restock)
+	return c.callRestock(itemConfig)
 }
 
 // Remove an item
 func (c *Client) Remove(key string) error {
-	_, err := c.xredisClient.Del(key)
-	return err
-}
-
-// Deregister an item
-func (c *Client) Deregister(key string) error {
-	itemConfigKey := fmt.Sprintf(itemConfigKeyFormat, key)
-	_, err := c.xredisClient.Del(itemConfigKey)
-	return err
+	return c.itemDao.Remove(key)
 }
 
 // Ping pings redis
 func (c *Client) Ping() error {
-	_, err := c.xredisClient.Ping()
-	return err
+	return c.itemDao.Ping()
 }
 
 // Close closes resources
 func (c *Client) Close() error {
-	return c.xredisClient.Close()
+	return c.itemDao.Close()
 }
 
 // HandleEvent overrides the default handleEvent callback
@@ -179,13 +163,13 @@ func (c *Client) publish(key string, status string) {
 	c.events <- &Event{Key: key, Type: status}
 }
 
-func (c *Client) callRestock(itemConfig *item.Config, restock func() (string, error)) (string, bool, error) {
-	if restock == nil {
+func (c *Client) callRestock(itemConfig *item.Config) (string, bool, error) {
+	if itemConfig.Restock == nil {
 		go c.publish(itemConfig.Key, OutOfStock)
 		return empty, false, nil
 	}
 
-	result, err := restock()
+	result, err := itemConfig.Restock()
 	if err != nil {
 		return empty, false, err
 	}
@@ -198,42 +182,16 @@ func (c *Client) callRestock(itemConfig *item.Config, restock func() (string, er
 	return result, true, nil
 }
 
-func (c *Client) saveItemInfo(itemConfig *item.Config) error {
-	itemConfigString, err := conversions.Stringify(itemConfig)
-	if err != nil {
-		return err
-	}
-
-	itemConfigKey := fmt.Sprintf(itemConfigKeyFormat, itemConfig.Key)
-	_, err = c.xredisClient.Set(itemConfigKey, itemConfigString)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (c *Client) retrieveItemConfig(key string) (*item.Config, error) {
-	itemConfigKey := fmt.Sprintf(itemConfigKeyFormat, key)
-	itemConfigString, ok, err := c.xredisClient.Get(itemConfigKey)
-	if err != nil {
-		return nil, err
-	}
-
-	if !ok {
-		return nil, errors.New(fmt.Sprintf(unregisteredItemFormat, key))
-	}
-
-	itemConfig := item.Config{}
-	err = conversions.Structify(itemConfigString, &itemConfig)
-	if err != nil {
-		return nil, err
-	}
-	return &itemConfig, nil
-}
-
 func newClient(xredisClient *xredis.Client) *Client {
 	events := make(chan *Event, eventsBuffer)
-	client := &Client{xredisClient: xredisClient, events: events}
+	itemRegistry := item.NewRegistry()
+	itemDao := item.NewDao(xredisClient)
+
+	client := &Client{
+		itemRegistry: itemRegistry,
+		itemDao:      itemDao,
+		events:       events,
+	}
 
 	go func() {
 		for event := range events {

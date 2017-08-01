@@ -170,6 +170,7 @@ package main
 import (
 	"fmt"
 	"github.com/shomali11/fridge"
+	"github.com/shomali11/fridge/item"
 	"time"
 )
 
@@ -181,20 +182,31 @@ func main() {
 		return "Hot Pizza", nil
 	}
 
-	fmt.Println(client.Register("food", time.Second, 2*time.Second)) // <nil>
-	fmt.Println(client.Put("food", "Raed Shomali"))                  // <nil>
-	fmt.Println(client.Get("food", restock))                         // "Pizza" true <nil>
+	fmt.Println(client.Register("food", time.Second, 2*time.Second, item.WithRestock(restock)))
+
+	fmt.Println(client.Put("food", "Pizza"))
+	fmt.Println(client.Get("food"))
 
 	time.Sleep(time.Second)
 
-	fmt.Println(client.Get("food", restock))                         // "Pizza" true <nil>
+	fmt.Println(client.Get("food"))
 
 	time.Sleep(2 * time.Second)
 
-	fmt.Println(client.Get("food", restock))                         // "Hot Pizza" true <nil>
-	fmt.Println(client.Remove("food"))                               // <nil>
-	fmt.Println(client.Deregister("food"))                           // <nil>
+	fmt.Println(client.Get("food"))
+	fmt.Println(client.Remove("food"))
+
+	client.Deregister("food")
 }
+```
+
+```
+<nil>
+<nil>
+Pizza true <nil>
+Pizza true <nil>
+Hot Pizza true <nil>
+<nil>
 ```
 
 ## Example 5
@@ -207,6 +219,7 @@ package main
 import (
 	"fmt"
 	"github.com/shomali11/fridge"
+	"github.com/shomali11/fridge/item"
 	"time"
 )
 
@@ -237,28 +250,28 @@ func main() {
 		return "Hot Pizza", nil
 	}
 
-	client.Register("food1", time.Second, 2*time.Second)
+	client.Register("food1", time.Second, 2*time.Second, item.WithRestock(restock))
 	client.Register("food2", time.Second, 2*time.Second)
 	client.Register("food3", time.Second, 2*time.Second)
 
 	client.Put("food1", "Pizza")
 	client.Put("food2", "Milk")
 
-	client.Get("food1", restock)
-	client.Get("food2", nil)
-	client.Get("food3", nil)
+	client.Get("food1")
+	client.Get("food2")
+	client.Get("food3")
 
 	time.Sleep(time.Second)
 
-	client.Get("food1", restock)
-	client.Get("food2", nil)
-	client.Get("food3", nil)
+	client.Get("food1")
+	client.Get("food2")
+	client.Get("food3")
 
 	time.Sleep(2 * time.Second)
 
-	client.Get("food1", restock)
-	client.Get("food2", nil)
-	client.Get("food3", nil)
+	client.Get("food1")
+	client.Get("food2")
+	client.Get("food3")
 
 	client.Remove("food1")
 	client.Remove("food2")

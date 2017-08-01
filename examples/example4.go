@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/shomali11/fridge"
+	"github.com/shomali11/fridge/item"
 	"time"
 )
 
@@ -14,17 +15,19 @@ func main() {
 		return "Hot Pizza", nil
 	}
 
-	fmt.Println(client.Register("food", time.Second, 2*time.Second))
+	fmt.Println(client.Register("food", time.Second, 2*time.Second, item.WithRestock(restock)))
+
 	fmt.Println(client.Put("food", "Pizza"))
-	fmt.Println(client.Get("food", restock))
+	fmt.Println(client.Get("food"))
 
 	time.Sleep(time.Second)
 
-	fmt.Println(client.Get("food", restock))
+	fmt.Println(client.Get("food"))
 
 	time.Sleep(2 * time.Second)
 
-	fmt.Println(client.Get("food", restock))
+	fmt.Println(client.Get("food"))
 	fmt.Println(client.Remove("food"))
-	fmt.Println(client.Deregister("food"))
+
+	client.Deregister("food")
 }
