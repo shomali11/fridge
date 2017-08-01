@@ -141,7 +141,7 @@ func (c *Client) SetEx(key string, value string, timeout int64) (bool, error) {
 	return toBool(connection.Do(setCommand, key, value, expireOption, timeout))
 }
 
-// GetTimestamp retrieves a key's value
+// Get retrieves a key's value
 func (c *Client) Get(key string) (string, bool, error) {
 	connection := c.GetConnection()
 	defer connection.Close()

@@ -40,7 +40,7 @@ var (
 	errConnClosed = errors.New("redigo: connection closed")
 )
 
-// Pool maintains a pool of connections. The application calls the GetTimestamp method
+// Pool maintains a pool of connections. The application calls the Get method
 // to get a connection from the pool and the connection's Close method to
 // return the connection's resources to the pool.
 //
@@ -72,7 +72,7 @@ var (
 // when the handler is done:
 //
 //  func serveHome(w http.ResponseWriter, r *http.Request) {
-//      conn := pool.GetTimestamp()
+//      conn := pool.Get()
 //      defer conn.Close()
 //      ...
 //  }
@@ -142,7 +142,7 @@ type Pool struct {
 	// the timeout to a value less than the server's timeout.
 	IdleTimeout time.Duration
 
-	// If Wait is true and the pool is at the MaxActive limit, then GetTimestamp() waits
+	// If Wait is true and the pool is at the MaxActive limit, then Get() waits
 	// for a connection to be returned to the pool before returning.
 	Wait bool
 
@@ -168,7 +168,7 @@ func NewPool(newFn func() (Conn, error), maxIdle int) *Pool {
 	return &Pool{Dial: newFn, MaxIdle: maxIdle}
 }
 
-// GetTimestamp gets a connection. The application must close the returned connection.
+// Get gets a connection. The application must close the returned connection.
 // This method always returns a valid connection so that applications can defer
 // error handling to the first use of the connection. If there is an error
 // getting an underlying connection, then the connection Err, Do, Send, Flush
@@ -250,7 +250,7 @@ func (p *Pool) get() (Conn, error) {
 
 	for {
 
-		// GetTimestamp idle connection.
+		// Get idle connection.
 
 		for i, n := 0, p.idle.Len(); i < n; i++ {
 			e := p.idle.Front()
