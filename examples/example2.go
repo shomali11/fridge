@@ -12,7 +12,8 @@ func main() {
 		Port: 6379,
 	}
 
-	client := fridge.SetupClient(options)
+	xredisClient := xredis.SetupClient(options)
+	client := fridge.NewClient(fridge.WithRedisClient(xredisClient))
 	defer client.Close()
 
 	fmt.Println(client.Ping())

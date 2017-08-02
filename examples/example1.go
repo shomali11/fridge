@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	client := fridge.DefaultClient()
+	client := fridge.NewClient()
 	defer client.Close()
 
 	fmt.Println(client.Ping())

@@ -1,36 +1,37 @@
 package item
 
 import (
-	"errors"
-	"fmt"
 	"sync"
-)
-
-const (
-	unregisteredItemFormat = "Unregistered item '%s'"
+	"time"
 )
 
 // NewRegistry creates a new item registry
-func NewRegistry() *Registry {
-	return &Registry{registry: make(map[string]*Config)}
+func NewRegistry(defaultBestBy time.Duration, defaultUseBy time.Duration) *Registry {
+	return &Registry{
+		registry:      make(map[string]*Config),
+		defaultBestBy: defaultBestBy,
+		defaultUseBy:  defaultUseBy,
+	}
 }
 
 // Registry contains registered items
 type Registry struct {
-	registry map[string]*Config
-	mutex    sync.RWMutex
+	registry      map[string]*Config
+	defaultBestBy time.Duration
+	defaultUseBy  time.Duration
+	mutex         sync.RWMutex
 }
 
 // Get retrieves an item configuration by key
-func (r *Registry) Get(key string) (*Config, error) {
+func (r *Registry) Get(key string) *Config {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 
 	config, found := r.registry[key]
 	if !found {
-		return nil, errors.New(fmt.Sprintf(unregisteredItemFormat, key))
+		return &Config{Key: key, BestBy: r.defaultBestBy, UseBy: r.defaultUseBy}
 	}
-	return config, nil
+	return config
 }
 
 // Set registers an item configuration

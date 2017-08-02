@@ -7,7 +7,6 @@ const (
 // NewEventBus creates a new EventBus
 func NewEventBus() *EventBus {
 	events := make(chan *Event, eventsBuffer)
-
 	eventBus := &EventBus{events: events}
 
 	go func(eventBus *EventBus) {

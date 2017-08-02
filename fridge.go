@@ -1,9 +1,7 @@
 package fridge
 
 import (
-	"github.com/garyburd/redigo/redis"
 	"github.com/shomali11/fridge/item"
-	"github.com/shomali11/xredis"
 	"time"
 )
 
@@ -17,7 +15,7 @@ const (
 	// Expired is when an item has passed its "Use By" duration
 	Expired = "EXPIRED"
 
-	// NotFound is when an item was never stored before
+	// NotFound is when an item was not found due to being removed or was never stored before
 	NotFound = "NOT_FOUND"
 
 	// Refresh is when an item was restocked with a fresher one
@@ -25,28 +23,25 @@ const (
 
 	// OutOfStock is when an item needs restocking, but no restocking function was provided
 	OutOfStock = "OUT_OF_STOCK"
+
+	// Unchanged is when the restocked item is not different from the version in the cache
+	Unchanged = "UNCHANGED"
 )
 
 const (
 	empty = ""
 )
 
-// DefaultClient returns a client with default options
-func DefaultClient() *Client {
-	client := xredis.DefaultClient()
-	return newClient(client)
-}
+// NewClient returns a client using an xredis client
+func NewClient(options ...ConfigOption) *Client {
+	config := NewConfig(options...)
 
-// SetupClient returns a client with provided options
-func SetupClient(options *xredis.Options) *Client {
-	client := xredis.SetupClient(options)
-	return newClient(client)
-}
-
-// NewClient returns a client using provided redis.Pool
-func NewClient(pool *redis.Pool) *Client {
-	client := xredis.NewClient(pool)
-	return newClient(client)
+	client := &Client{
+		itemRegistry: item.NewRegistry(config.defaultBestBy, config.defaultUseBy),
+		itemDao:      item.NewDao(config.xredisClient),
+		eventBus:     NewEventBus(),
+	}
+	return client
 }
 
 // Client fridge client
@@ -57,14 +52,9 @@ type Client struct {
 }
 
 // Register an item
-func (c *Client) Register(key string, bestBy time.Duration, useBy time.Duration, options ...item.ConfigOption) error {
-	itemConfig, err := item.NewConfig(key, bestBy, useBy, options...)
-	if err != nil {
-		return err
-	}
-
+func (c *Client) Register(key string, options ...item.ConfigOption) {
+	itemConfig := item.NewConfig(key, options...)
 	c.itemRegistry.Set(itemConfig)
-	return nil
 }
 
 // Deregister an item
@@ -74,12 +64,8 @@ func (c *Client) Deregister(key string) {
 
 // Put an item
 func (c *Client) Put(key string, value string) error {
-	itemConfig, err := c.itemRegistry.Get(key)
-	if err != nil {
-		return err
-	}
-
-	err = c.itemDao.Set(key, value, itemConfig.GetUseByInSeconds())
+	itemConfig := c.itemRegistry.Get(key)
+	err := c.itemDao.Set(key, value, itemConfig.GetUseByInSeconds())
 	if err != nil {
 		return err
 	}
@@ -88,12 +74,8 @@ func (c *Client) Put(key string, value string) error {
 
 // Get an item
 func (c *Client) Get(key string) (string, bool, error) {
-	itemConfig, err := c.itemRegistry.Get(key)
-	if err != nil {
-		return empty, false, err
-	}
-
-	value, found, stockTimestamp, err := c.itemDao.Get(key)
+	itemConfig := c.itemRegistry.Get(key)
+	cachedValue, found, stockTimestamp, err := c.itemDao.Get(key)
 	if err != nil {
 		return empty, false, err
 	}
@@ -104,23 +86,23 @@ func (c *Client) Get(key string) (string, bool, error) {
 		} else {
 			go c.publish(key, Expired)
 		}
-		return c.callRestock(itemConfig)
+		return c.restock(itemConfig)
 	}
 
 	now := time.Now().UTC()
 	if now.Before(stockTimestamp.Add(itemConfig.BestBy)) {
 		go c.publish(key, Fresh)
-		return value, true, nil
+		return cachedValue, true, nil
 	}
 
 	if now.Before(stockTimestamp.Add(itemConfig.UseBy)) {
 		go c.publish(key, Cold)
-		go c.callRestock(itemConfig)
-		return value, true, nil
+		go c.restockAndCompare(cachedValue, itemConfig)
+		return cachedValue, true, nil
 	}
 
 	go c.publish(key, Expired)
-	return c.callRestock(itemConfig)
+	return c.restockAndCompare(cachedValue, itemConfig)
 }
 
 // Remove an item
@@ -147,7 +129,19 @@ func (c *Client) publish(key string, eventType string) {
 	c.eventBus.Publish(key, eventType)
 }
 
-func (c *Client) callRestock(itemConfig *item.Config) (string, bool, error) {
+func (c *Client) restockAndCompare(cachedValue string, itemConfig *item.Config) (string, bool, error) {
+	newValue, found, err := c.restock(itemConfig)
+	if err != nil || !found {
+		return empty, found, err
+	}
+
+	if newValue == cachedValue {
+		go c.publish(itemConfig.Key, Unchanged)
+	}
+	return newValue, true, nil
+}
+
+func (c *Client) restock(itemConfig *item.Config) (string, bool, error) {
 	if itemConfig.Restock == nil {
 		go c.publish(itemConfig.Key, OutOfStock)
 		return empty, false, nil
@@ -159,18 +153,10 @@ func (c *Client) callRestock(itemConfig *item.Config) (string, bool, error) {
 	}
 
 	go c.publish(itemConfig.Key, Refresh)
+
 	err = c.Put(itemConfig.Key, result)
 	if err != nil {
 		return empty, false, err
 	}
 	return result, true, nil
-}
-
-func newClient(xredisClient *xredis.Client) *Client {
-	client := &Client{
-		itemRegistry: item.NewRegistry(),
-		itemDao:      item.NewDao(xredisClient),
-		eventBus:     NewEventBus(),
-	}
-	return client
 }

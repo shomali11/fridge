@@ -47,7 +47,7 @@ govendor fetch github.com/shomali11/fridge
 
 ## Example 1
 
-Using `DefaultClient` to create a client with default options
+Using `NewClient` with default options
 
 ```go
 package main
@@ -58,36 +58,16 @@ import (
 )
 
 func main() {
-	client := fridge.DefaultClient()
+	client := fridge.NewClient()
 	defer client.Close()
 
 	fmt.Println(client.Ping()) // <nil>
 }
 ```
 
-List of default options
-
-```text
-defaultHost                  = "localhost"
-defaultPort                  = 6379
-defaultPassword              = ""
-defaultDatabase              = 0
-defaultNetwork               = "tcp"
-defaultConnectTimeout        = time.Second
-defaultWriteTimeout          = time.Second
-defaultReadTimeout           = time.Second
-defaultConnectionIdleTimeout = 240 * time.Second
-defaultConnectionMaxIdle     = 100
-defaultConnectionMaxActive   = 10000
-defaultConnectionWait        = false
-defaultTlsConfig             = nil
-defaultTlsSkipVerify         = false
-defaultTestOnBorrowTimeout   = time.Minute
-```
-
 ## Example 2
 
-Using `SetupClient` to create a client using provided options
+Using `NewClient` to with a custom `xredis` client
 
 ```go
 package main
@@ -104,65 +84,72 @@ func main() {
 		Port: 6379,
 	}
 
-	client := fridge.SetupClient(options)
+	xredisClient := xredis.SetupClient(options)
+	client := fridge.NewClient(fridge.WithRedisClient(xredisClient))
 	defer client.Close()
 
 	fmt.Println(client.Ping()) // <nil>
 }
 ```
 
-Available options to set
-
-```go
-type Options struct {
-	Host                  string
-	Port                  int
-	Password              string
-	Database              int
-	Network               string
-	ConnectTimeout        time.Duration
-	WriteTimeout          time.Duration
-	ReadTimeout           time.Duration
-	ConnectionIdleTimeout time.Duration
-	ConnectionMaxIdle     int
-	ConnectionMaxActive   int
-	ConnectionWait        bool
-	TlsConfig             *tls.Config
-	TlsSkipVerify         bool
-	TestOnBorrowPeriod    time.Duration
-}
-```
-
 ## Example 3
 
-Using `NewClient` to create a client using `redigo`'s `redis.Pool`
+Using the `Put`, `Get` & `Remove` to show how to put, get and remove an item.
+_Note: That we are using a default client that has a default Best By of 1 hour and Use By of 1 Day for all keys_
 
 ```go
 package main
 
 import (
 	"fmt"
-	"github.com/garyburd/redigo/redis"
 	"github.com/shomali11/fridge"
 )
 
 func main() {
-	pool := &redis.Pool{
-		Dial: func() (redis.Conn, error) {
-			return redis.Dial("tcp", "localhost:6379")
-		},
-	}
-
-	client := fridge.NewClient(pool)
+	client := fridge.NewClient()
 	defer client.Close()
 
-	fmt.Println(client.Ping()) // <nil>
+	fmt.Println(client.Put("food", "Pizza")) // <nil>
+	fmt.Println(client.Get("food"))          // "Pizza" true <nil>
+	fmt.Println(client.Remove("food"))       // <nil>
+	fmt.Println(client.Get("food"))          // "" false <nil>
 }
 ```
 
 ## Example 4
 
-Using the `Register`, `Put`, `Get`, `Remove` & `Deregister` to show how to register, put, get remove and deregister an item
+Using the `WithDefaultDurations` to override the default Best By and Use By durations for all keys
+
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/shomali11/fridge"
+	"time"
+)
+
+func main() {
+	client := fridge.NewClient(fridge.WithDefaultDurations(time.Second, 2*time.Second))
+	defer client.Close()
+
+	fmt.Println(client.Put("food", "Pizza")) // <nil>
+	fmt.Println(client.Get("food"))          // "Pizza" true <nil>
+
+	time.Sleep(time.Second)
+
+	fmt.Println(client.Get("food"))          // "Pizza" true <nil>
+
+	time.Sleep(2 * time.Second)
+
+	fmt.Println(client.Get("food"))          // "" false <nil>
+	fmt.Println(client.Remove("food"))       // <nil>
+}
+```
+
+## Example 5
+
+Using the `Register` & `Deregister` to show how to register an item and override that item's durations.
 
 ```go
 package main
@@ -175,39 +162,68 @@ import (
 )
 
 func main() {
-	client := fridge.DefaultClient()
+	client := fridge.NewClient()
+	defer client.Close()
+
+	client.Register("food", item.WithDurations(time.Second, 2*time.Second))
+
+	fmt.Println(client.Put("food", "Pizza")) // <nil>
+	fmt.Println(client.Get("food"))          // "Pizza" true <nil>
+
+	time.Sleep(time.Second)
+
+	fmt.Println(client.Get("food"))          // "Pizza" true <nil>
+
+	time.Sleep(2 * time.Second)
+
+	fmt.Println(client.Get("food"))          // "" false <nil>
+	fmt.Println(client.Remove("food"))       // <nil>
+
+	client.Deregister("food")
+}
+```
+
+## Example 6
+
+Using the `Register` & `Deregister` to show how to register & deregister an item to set that item's restocking mechanism.
+
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/shomali11/fridge"
+	"github.com/shomali11/fridge/item"
+	"time"
+)
+
+func main() {
+	client := fridge.NewClient()
 	defer client.Close()
 
 	restock := func() (string, error) {
 		return "Hot Pizza", nil
 	}
 
-	fmt.Println(client.Register("food", time.Second, 2*time.Second, item.WithRestock(restock)))
+	client.Register("food", item.WithDurations(time.Second, 2*time.Second), item.WithRestock(restock))
 
-	fmt.Println(client.Put("food", "Pizza"))
-	fmt.Println(client.Get("food"))
+	fmt.Println(client.Put("food", "Pizza")) // <nil>
+	fmt.Println(client.Get("food"))          // "Pizza" true <nil>
 
 	time.Sleep(time.Second)
 
-	fmt.Println(client.Get("food"))
+	fmt.Println(client.Get("food"))          // "Pizza" true <nil>
 
 	time.Sleep(2 * time.Second)
 
-	fmt.Println(client.Get("food"))
-	fmt.Println(client.Remove("food"))
+	fmt.Println(client.Get("food"))          // "Hot Pizza" true <nil>
+	fmt.Println(client.Remove("food"))       // <nil>
+
+	client.Deregister("food")
 }
 ```
 
-```
-<nil>
-<nil>
-Pizza true <nil>
-Pizza true <nil>
-Hot Pizza true <nil>
-<nil>
-```
-
-## Example 5
+## Example 7
 
 Using the `HandleEvent` to pass a callback to access the stream of events generated
 
@@ -222,7 +238,7 @@ import (
 )
 
 func main() {
-	client := fridge.DefaultClient()
+	client := fridge.NewClient()
 	defer client.Close()
 
 	client.HandleEvent(func(event *fridge.Event) {
@@ -241,16 +257,18 @@ func main() {
 			fmt.Println("Yay! Getting a new one!")
 		case fridge.OutOfStock:
 			fmt.Println("Oh no! It is out of stock.")
+		case fridge.Unchanged:
+			fmt.Println("Interesting! It has not changed.")
 		}
 	})
 
 	restock := func() (string, error) {
-		return "Hot Pizza", nil
+		return "Pizza", nil
 	}
 
-	client.Register("food1", time.Second, 2*time.Second, item.WithRestock(restock))
-	client.Register("food2", time.Second, 2*time.Second)
-	client.Register("food3", time.Second, 2*time.Second)
+	client.Register("food1", item.WithDurations(time.Second, 2*time.Second), item.WithRestock(restock))
+	client.Register("food2", item.WithDurations(time.Second, 2*time.Second))
+	client.Register("food3", item.WithDurations(time.Second, 2*time.Second))
 
 	client.Put("food1", "Pizza")
 	client.Put("food2", "Milk")
@@ -274,6 +292,10 @@ func main() {
 	client.Remove("food1")
 	client.Remove("food2")
 	client.Remove("food3")
+	
+	client.Deregister("food1")
+	client.Deregister("food2")
+	client.Deregister("food3")
 }
 ```
 
@@ -286,6 +308,7 @@ Key: food3 - Oops! Did not find it.
 Key: food3 - Oh no! It is out of stock.
 Key: food1 - Not fresh! But not bad either!
 Key: food1 - Yay! Getting a new one!
+Key: food1 - Interesting! It has not changed.
 Key: food2 - Not fresh! But not bad either!
 Key: food2 - Oh no! It is out of stock.
 Key: food3 - Oops! Did not find it.
