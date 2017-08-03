@@ -47,27 +47,7 @@ govendor fetch github.com/shomali11/fridge
 
 ## Example 1
 
-Using `NewClient` with default options
-
-```go
-package main
-
-import (
-	"fmt"
-	"github.com/shomali11/fridge"
-)
-
-func main() {
-	client := fridge.NewClient()
-	defer client.Close()
-
-	fmt.Println(client.Ping()) // <nil>
-}
-```
-
-## Example 2
-
-Using `NewClient` to with a custom `xredis` client
+Using `NewClient` with a default `xredis` client
 
 ```go
 package main
@@ -79,20 +59,20 @@ import (
 )
 
 func main() {
-	options := &xredis.Options{
-		Host: "localhost",
-		Port: 6379,
-	}
-
-	xredisClient := xredis.SetupClient(options)
-	client := fridge.NewClient(fridge.WithRedisClient(xredisClient))
+	client := fridge.NewClient(xredis.DefaultClient())
 	defer client.Close()
 
-	fmt.Println(client.Ping()) // <nil>
+	fmt.Println(client.Ping())
 }
 ```
 
-## Example 3
+Output
+
+```
+<nil>
+```
+
+## Example 2
 
 Using the `Put`, `Get` & `Remove` to show how to put, get and remove an item.
 _Note: That we are using a default client that has a default Best By of 1 hour and Use By of 1 Day for all keys_
@@ -103,20 +83,30 @@ package main
 import (
 	"fmt"
 	"github.com/shomali11/fridge"
+	"github.com/shomali11/xredis"
 )
 
 func main() {
-	client := fridge.NewClient()
+	client := fridge.NewClient(xredis.DefaultClient())
 	defer client.Close()
 
-	fmt.Println(client.Put("food", "Pizza")) // <nil>
-	fmt.Println(client.Get("food"))          // "Pizza" true <nil>
-	fmt.Println(client.Remove("food"))       // <nil>
-	fmt.Println(client.Get("food"))          // "" false <nil>
+	fmt.Println(client.Put("food", "Pizza"))
+	fmt.Println(client.Get("food"))          
+	fmt.Println(client.Remove("food"))       
+	fmt.Println(client.Get("food"))          
 }
 ```
 
-## Example 4
+Output
+
+```
+<nil>
+Pizza true <nil>
+<nil>
+ false <nil>
+```
+
+## Example 3
 
 Using the `WithDefaultDurations` to override the default Best By and Use By durations for all keys
 
@@ -126,28 +116,39 @@ package main
 import (
 	"fmt"
 	"github.com/shomali11/fridge"
+	"github.com/shomali11/xredis"
 	"time"
 )
 
 func main() {
-	client := fridge.NewClient(fridge.WithDefaultDurations(time.Second, 2*time.Second))
+	client := fridge.NewClient(xredis.DefaultClient(), fridge.WithDefaultDurations(time.Second, 2*time.Second))
 	defer client.Close()
 
-	fmt.Println(client.Put("food", "Pizza")) // <nil>
-	fmt.Println(client.Get("food"))          // "Pizza" true <nil>
+	fmt.Println(client.Put("food", "Pizza"))
+	fmt.Println(client.Get("food"))
 
 	time.Sleep(time.Second)
 
-	fmt.Println(client.Get("food"))          // "Pizza" true <nil>
+	fmt.Println(client.Get("food"))
 
 	time.Sleep(2 * time.Second)
 
-	fmt.Println(client.Get("food"))          // "" false <nil>
-	fmt.Println(client.Remove("food"))       // <nil>
+	fmt.Println(client.Get("food"))
+	fmt.Println(client.Remove("food"))
 }
 ```
 
-## Example 5
+Output
+
+```
+<nil>
+Pizza true <nil>
+Pizza true <nil>
+ false <nil>
+<nil>
+```
+
+## Example 4
 
 Using the `Register` & `Deregister` to show how to register an item and override that item's durations.
 
@@ -158,32 +159,39 @@ import (
 	"fmt"
 	"github.com/shomali11/fridge"
 	"github.com/shomali11/fridge/item"
+	"github.com/shomali11/xredis"
 	"time"
 )
 
 func main() {
-	client := fridge.NewClient()
+	client := fridge.NewClient(xredis.DefaultClient())
 	defer client.Close()
 
-	client.Register("food", item.WithDurations(time.Second, 2*time.Second))
-
-	fmt.Println(client.Put("food", "Pizza")) // <nil>
-	fmt.Println(client.Get("food"))          // "Pizza" true <nil>
+	fmt.Println(client.Put("food", "Pizza", item.WithDurations(time.Second, 2*time.Second)))
+	fmt.Println(client.Get("food"))
 
 	time.Sleep(time.Second)
 
-	fmt.Println(client.Get("food"))          // "Pizza" true <nil>
+	fmt.Println(client.Get("food"))
 
 	time.Sleep(2 * time.Second)
 
-	fmt.Println(client.Get("food"))          // "" false <nil>
-	fmt.Println(client.Remove("food"))       // <nil>
-
-	client.Deregister("food")
+	fmt.Println(client.Get("food"))
+	fmt.Println(client.Remove("food"))
 }
 ```
 
-## Example 6
+Output
+
+```
+<nil>
+Pizza true <nil>
+Pizza true <nil>
+ false <nil>
+<nil>
+```
+
+## Example 5
 
 Using the `Register` & `Deregister` to show how to register & deregister an item to set that item's restocking mechanism.
 
@@ -194,36 +202,43 @@ import (
 	"fmt"
 	"github.com/shomali11/fridge"
 	"github.com/shomali11/fridge/item"
+	"github.com/shomali11/xredis"
 	"time"
 )
 
 func main() {
-	client := fridge.NewClient()
+	client := fridge.NewClient(xredis.DefaultClient())
 	defer client.Close()
 
 	restock := func() (string, error) {
 		return "Hot Pizza", nil
 	}
 
-	client.Register("food", item.WithDurations(time.Second, 2*time.Second), item.WithRestock(restock))
-
-	fmt.Println(client.Put("food", "Pizza")) // <nil>
-	fmt.Println(client.Get("food"))          // "Pizza" true <nil>
+	fmt.Println(client.Put("food", "Pizza", item.WithDurations(time.Second, 2*time.Second)))
+	fmt.Println(client.Get("food", item.WithRestock(restock)))
 
 	time.Sleep(time.Second)
 
-	fmt.Println(client.Get("food"))          // "Pizza" true <nil>
+	fmt.Println(client.Get("food", item.WithRestock(restock)))
 
 	time.Sleep(2 * time.Second)
 
-	fmt.Println(client.Get("food"))          // "Hot Pizza" true <nil>
-	fmt.Println(client.Remove("food"))       // <nil>
-
-	client.Deregister("food")
+	fmt.Println(client.Get("food", item.WithRestock(restock)))
+	fmt.Println(client.Remove("food"))
 }
 ```
 
-## Example 7
+Output
+
+```
+<nil>
+Pizza true <nil>
+Pizza true <nil>
+Hot Pizza true <nil>
+<nil>
+```
+
+## Example 6
 
 Using the `HandleEvent` to pass a callback to access the stream of events generated
 
@@ -234,11 +249,12 @@ import (
 	"fmt"
 	"github.com/shomali11/fridge"
 	"github.com/shomali11/fridge/item"
+	"github.com/shomali11/xredis"
 	"time"
 )
 
 func main() {
-	client := fridge.NewClient()
+	client := fridge.NewClient(xredis.DefaultClient(), fridge.WithDefaultDurations(time.Second, 2*time.Second))
 	defer client.Close()
 
 	client.HandleEvent(func(event *fridge.Event) {
@@ -266,36 +282,28 @@ func main() {
 		return "Pizza", nil
 	}
 
-	client.Register("food1", item.WithDurations(time.Second, 2*time.Second), item.WithRestock(restock))
-	client.Register("food2", item.WithDurations(time.Second, 2*time.Second))
-	client.Register("food3", item.WithDurations(time.Second, 2*time.Second))
-
 	client.Put("food1", "Pizza")
 	client.Put("food2", "Milk")
 
-	client.Get("food1")
+	client.Get("food1", item.WithRestock(restock))
 	client.Get("food2")
 	client.Get("food3")
 
 	time.Sleep(time.Second)
 
-	client.Get("food1")
+	client.Get("food1", item.WithRestock(restock))
 	client.Get("food2")
 	client.Get("food3")
 
 	time.Sleep(2 * time.Second)
 
-	client.Get("food1")
+	client.Get("food1", item.WithRestock(restock))
 	client.Get("food2")
 	client.Get("food3")
 
 	client.Remove("food1")
 	client.Remove("food2")
 	client.Remove("food3")
-	
-	client.Deregister("food1")
-	client.Deregister("food2")
-	client.Deregister("food3")
 }
 ```
 

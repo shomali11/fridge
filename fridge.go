@@ -2,6 +2,7 @@ package fridge
 
 import (
 	"github.com/shomali11/fridge/item"
+	"github.com/shomali11/xredis"
 	"time"
 )
 
@@ -33,39 +34,31 @@ const (
 )
 
 // NewClient returns a client using an xredis client
-func NewClient(options ...ConfigOption) *Client {
-	config := NewConfig(options...)
-
+func NewClient(xredisClient *xredis.Client, options ...ConfigOption) *Client {
 	client := &Client{
-		itemRegistry: item.NewRegistry(config.defaultBestBy, config.defaultUseBy),
-		itemDao:      item.NewDao(config.xredisClient),
-		eventBus:     NewEventBus(),
+		config:   newConfig(options...),
+		itemDao:  item.NewDao(xredisClient),
+		eventBus: newEventBus(),
 	}
 	return client
 }
 
 // Client fridge client
 type Client struct {
-	itemRegistry *item.Registry
-	itemDao      *item.Dao
-	eventBus     *EventBus
-}
-
-// Register an item
-func (c *Client) Register(key string, options ...item.ConfigOption) {
-	itemConfig := item.NewConfig(key, options...)
-	c.itemRegistry.Set(itemConfig)
-}
-
-// Deregister an item
-func (c *Client) Deregister(key string) {
-	c.itemRegistry.Remove(key)
+	config   *Config
+	itemDao  *item.Dao
+	eventBus *EventBus
 }
 
 // Put an item
-func (c *Client) Put(key string, value string) error {
-	itemConfig := c.itemRegistry.Get(key)
-	err := c.itemDao.Set(key, value, itemConfig.GetUseByInSeconds())
+func (c *Client) Put(key string, value string, options ...item.ConfigOption) error {
+	itemConfig := newItemConfig(c.config, options...)
+	err := c.itemDao.SetConfig(key, itemConfig)
+	if err != nil {
+		return err
+	}
+
+	err = c.itemDao.Set(key, value, itemConfig.GetUseByInSeconds())
 	if err != nil {
 		return err
 	}
@@ -73,36 +66,43 @@ func (c *Client) Put(key string, value string) error {
 }
 
 // Get an item
-func (c *Client) Get(key string) (string, bool, error) {
-	itemConfig := c.itemRegistry.Get(key)
-	cachedValue, found, stockTimestamp, err := c.itemDao.Get(key)
+func (c *Client) Get(key string, options ...item.QueryConfigOption) (string, bool, error) {
+	queryConfig := newQueryConfig(options...)
+	restock := queryConfig.Restock
+
+	itemConfig, err := c.itemDao.GetConfig(key)
+	if err != nil {
+		return empty, false, err
+	}
+
+	cachedValue, found, err := c.itemDao.Get(key)
 	if err != nil {
 		return empty, false, err
 	}
 
 	if !found {
-		if stockTimestamp.IsZero() {
+		if itemConfig.Timestamp.IsZero() {
 			go c.publish(key, NotFound)
 		} else {
 			go c.publish(key, Expired)
 		}
-		return c.restock(itemConfig)
+		return c.restock(key, restock)
 	}
 
 	now := time.Now().UTC()
-	if now.Before(stockTimestamp.Add(itemConfig.BestBy)) {
+	if now.Before(itemConfig.Timestamp.Add(itemConfig.BestBy)) {
 		go c.publish(key, Fresh)
 		return cachedValue, true, nil
 	}
 
-	if now.Before(stockTimestamp.Add(itemConfig.UseBy)) {
+	if now.Before(itemConfig.Timestamp.Add(itemConfig.UseBy)) {
 		go c.publish(key, Cold)
-		go c.restockAndCompare(cachedValue, itemConfig)
+		go c.restockAndCompare(key, cachedValue, restock)
 		return cachedValue, true, nil
 	}
 
 	go c.publish(key, Expired)
-	return c.restockAndCompare(cachedValue, itemConfig)
+	return c.restockAndCompare(key, cachedValue, restock)
 }
 
 // Remove an item
@@ -129,34 +129,50 @@ func (c *Client) publish(key string, eventType string) {
 	c.eventBus.Publish(key, eventType)
 }
 
-func (c *Client) restockAndCompare(cachedValue string, itemConfig *item.Config) (string, bool, error) {
-	newValue, found, err := c.restock(itemConfig)
+func (c *Client) restockAndCompare(key string, cachedValue string, callback func() (string, error)) (string, bool, error) {
+	newValue, found, err := c.restock(key, callback)
 	if err != nil || !found {
 		return empty, found, err
 	}
 
 	if newValue == cachedValue {
-		go c.publish(itemConfig.Key, Unchanged)
+		go c.publish(key, Unchanged)
 	}
 	return newValue, true, nil
 }
 
-func (c *Client) restock(itemConfig *item.Config) (string, bool, error) {
-	if itemConfig.Restock == nil {
-		go c.publish(itemConfig.Key, OutOfStock)
+func (c *Client) restock(key string, callback func() (string, error)) (string, bool, error) {
+	if callback == nil {
+		go c.publish(key, OutOfStock)
 		return empty, false, nil
 	}
 
-	result, err := itemConfig.Restock()
+	result, err := callback()
 	if err != nil {
 		return empty, false, err
 	}
 
-	go c.publish(itemConfig.Key, Refresh)
+	go c.publish(key, Refresh)
 
-	err = c.Put(itemConfig.Key, result)
+	err = c.Put(key, result)
 	if err != nil {
 		return empty, false, err
 	}
 	return result, true, nil
+}
+
+func newItemConfig(config *Config, options ...item.ConfigOption) *item.Config {
+	itemConfig := &item.Config{BestBy: config.defaultBestBy, UseBy: config.defaultUseBy}
+	for _, option := range options {
+		option(itemConfig)
+	}
+	return itemConfig
+}
+
+func newQueryConfig(options ...item.QueryConfigOption) *item.QueryConfig {
+	queryConfig := &item.QueryConfig{}
+	for _, option := range options {
+		option(queryConfig)
+	}
+	return queryConfig
 }

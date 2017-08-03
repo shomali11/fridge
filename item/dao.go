@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	timestampKeyFormat = "%s.timestamp"
+	configKeyFormat = "%s.config"
 )
 
 // NewDao creates a new dao object
@@ -22,17 +22,12 @@ type Dao struct {
 }
 
 // Get retrieves an item
-func (d *Dao) Get(key string) (string, bool, time.Time, error) {
+func (d *Dao) Get(key string) (string, bool, error) {
 	value, found, err := d.xredisClient.Get(key)
 	if err != nil {
-		return value, found, time.Time{}, err
+		return value, found, err
 	}
-
-	timestamp, err := d.getTimestamp(key)
-	if err != nil {
-		return value, found, time.Time{}, err
-	}
-	return value, found, timestamp, nil
+	return value, found, nil
 }
 
 // Set stores a value
@@ -41,12 +36,48 @@ func (d *Dao) Set(key string, value string, timeout int64) error {
 	if err != nil {
 		return err
 	}
-	return d.setTimestamp(key, time.Now().UTC())
+	return nil
+}
+
+// SetConfig stores a key's config
+func (d *Dao) SetConfig(key string, config *Config) error {
+	config.Timestamp = time.Now().UTC()
+	timestampString, err := conversions.Stringify(config)
+	if err != nil {
+		return err
+	}
+
+	configKey := fmt.Sprintf(configKeyFormat, key)
+	_, err = d.xredisClient.Set(configKey, timestampString)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// GetConfig retrieves a key's config
+func (d *Dao) GetConfig(key string) (*Config, error) {
+	timestampKey := fmt.Sprintf(configKeyFormat, key)
+	configString, found, err := d.xredisClient.Get(timestampKey)
+	if err != nil {
+		return nil, err
+	}
+
+	if !found {
+		return &Config{}, nil
+	}
+
+	var config *Config
+	err = conversions.Structify(configString, &config)
+	if err != nil {
+		return nil, err
+	}
+	return config, nil
 }
 
 // Remove an item
 func (d *Dao) Remove(key string) error {
-	timestampKey := fmt.Sprintf(timestampKeyFormat, key)
+	timestampKey := fmt.Sprintf(configKeyFormat, key)
 	_, err := d.xredisClient.Del(key, timestampKey)
 	return err
 }
@@ -60,37 +91,4 @@ func (d *Dao) Ping() error {
 // Close closes resources
 func (d *Dao) Close() error {
 	return d.xredisClient.Close()
-}
-
-func (d *Dao) setTimestamp(key string, timestamp time.Time) error {
-	timestampString, err := conversions.Stringify(timestamp)
-	if err != nil {
-		return err
-	}
-
-	timestampKey := fmt.Sprintf(timestampKeyFormat, key)
-	_, err = d.xredisClient.Set(timestampKey, timestampString)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (d *Dao) getTimestamp(key string) (time.Time, error) {
-	timestampKey := fmt.Sprintf(timestampKeyFormat, key)
-	timestampString, found, err := d.xredisClient.Get(timestampKey)
-	if err != nil {
-		return time.Time{}, err
-	}
-
-	if !found {
-		return time.Time{}, nil
-	}
-
-	var timestamp time.Time
-	err = conversions.Structify(timestampString, &timestamp)
-	if err != nil {
-		return time.Time{}, err
-	}
-	return timestamp, nil
 }

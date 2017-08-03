@@ -7,14 +7,11 @@ import (
 )
 
 func main() {
-	options := &xredis.Options{
-		Host: "localhost",
-		Port: 6379,
-	}
-
-	xredisClient := xredis.SetupClient(options)
-	client := fridge.NewClient(fridge.WithRedisClient(xredisClient))
+	client := fridge.NewClient(xredis.DefaultClient())
 	defer client.Close()
 
-	fmt.Println(client.Ping())
+	fmt.Println(client.Put("food", "Pizza"))
+	fmt.Println(client.Get("food"))
+	fmt.Println(client.Remove("food"))
+	fmt.Println(client.Get("food"))
 }

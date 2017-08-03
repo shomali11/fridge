@@ -4,8 +4,8 @@ const (
 	eventsBuffer = 1000
 )
 
-// NewEventBus creates a new EventBus
-func NewEventBus() *EventBus {
+// newEventBus creates a new EventBus
+func newEventBus() *EventBus {
 	events := make(chan *Event, eventsBuffer)
 	eventBus := &EventBus{events: events}
 
