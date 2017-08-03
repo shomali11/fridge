@@ -74,7 +74,7 @@ Output
 
 ## Example 2
 
-Using the `Put`, `Get` & `Remove` to show how to put, get and remove an item.
+Using `Put`, `Get` & `Remove` to show how to put, get and remove an item.
 _Note: That we are using a default client that has a default Best By of 1 hour and Use By of 1 Day for all keys_
 
 ```go
@@ -108,7 +108,7 @@ Pizza true <nil>
 
 ## Example 3
 
-Using the `WithDefaultDurations` to override the default Best By and Use By durations for all keys
+Using `WithDefaultDurations` to override the default Best By and Use By durations for all keys
 
 ```go
 package main
@@ -150,7 +150,7 @@ Pizza true <nil>
 
 ## Example 4
 
-Using the `Register` & `Deregister` to show how to register an item and override that item's durations.
+Using `Put` to show how to put an item and override that item's durations.
 
 ```go
 package main
@@ -193,7 +193,7 @@ Pizza true <nil>
 
 ## Example 5
 
-Using the `Register` & `Deregister` to show how to register & deregister an item to set that item's restocking mechanism.
+Using `Get` to show how to retrieve an item while providing a restocking mechanism.
 
 ```go
 package main
@@ -240,7 +240,7 @@ Hot Pizza true <nil>
 
 ## Example 6
 
-Using the `HandleEvent` to pass a callback to access the stream of events generated
+Using `HandleEvent` to pass a callback to access the stream of events generated
 
 ```go
 package main
