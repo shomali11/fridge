@@ -82,7 +82,8 @@ func (c *Client) Get(key string, options ...item.QueryConfigOption) (string, boo
 	}
 
 	if !found {
-		itemConfig = c.newDefaultItemConfig()
+		go c.publish(key, NotFound)
+		return empty, false, err
 	}
 
 	cachedValue, found, err := c.itemDao.Get(key)
@@ -91,12 +92,8 @@ func (c *Client) Get(key string, options ...item.QueryConfigOption) (string, boo
 	}
 
 	if !found {
-		if itemConfig.Timestamp.IsZero() {
-			go c.publish(key, NotFound)
-		} else {
-			go c.publish(key, Expired)
-		}
-		return c.restock(key, restock)
+		go c.publish(key, Expired)
+		return c.restockAndCompare(key, cachedValue, restock)
 	}
 
 	now := time.Now().UTC()
@@ -164,15 +161,24 @@ func (c *Client) restock(key string, callback func() (string, error)) (string, b
 
 	go c.publish(key, Refresh)
 
-	err = c.Put(key, result)
+	bestBy, useBy := c.getDurations(key)
+	err = c.Put(key, result, item.WithDurations(bestBy, useBy))
 	if err != nil {
 		return empty, false, err
 	}
 	return result, true, nil
 }
 
-func (c *Client) newDefaultItemConfig() *item.Config {
-	return &item.Config{BestBy: c.config.defaultBestBy, UseBy: c.config.defaultUseBy}
+func (c *Client) getDurations(key string) (time.Duration, time.Duration) {
+	bestBy := c.config.defaultBestBy
+	useBy := c.config.defaultUseBy
+
+	itemConfig, found, err := c.itemDao.GetConfig(key)
+	if found && err == nil {
+		bestBy = itemConfig.BestBy
+		useBy = itemConfig.UseBy
+	}
+	return bestBy, useBy
 }
 
 func newItemConfig(config *Config, options ...item.ConfigOption) *item.Config {
