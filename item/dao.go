@@ -23,20 +23,13 @@ type Dao struct {
 
 // Get retrieves an item
 func (d *Dao) Get(key string) (string, bool, error) {
-	value, found, err := d.xredisClient.Get(key)
-	if err != nil {
-		return value, found, err
-	}
-	return value, found, nil
+	return d.xredisClient.Get(key)
 }
 
 // Set stores a value
 func (d *Dao) Set(key string, value string, timeout int64) error {
 	_, err := d.xredisClient.SetEx(key, value, timeout)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 // SetConfig stores a key's config
