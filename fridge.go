@@ -1,6 +1,7 @@
 package fridge
 
 import (
+	"errors"
 	"github.com/shomali11/fridge/item"
 	"github.com/shomali11/xredis"
 	"time"
@@ -30,7 +31,8 @@ const (
 )
 
 const (
-	empty = ""
+	empty                 = ""
+	invalidDurationsError = "Invalid 'best by' and 'use by' durations"
 )
 
 // NewClient returns a client using an xredis client
@@ -53,6 +55,10 @@ type Client struct {
 // Put an item
 func (c *Client) Put(key string, value string, options ...item.ConfigOption) error {
 	itemConfig := newItemConfig(c.config, options...)
+	if itemConfig.BestBy > itemConfig.UseBy {
+		return errors.New(invalidDurationsError)
+	}
+
 	err := c.itemDao.SetConfig(key, itemConfig)
 	if err != nil {
 		return err
