@@ -46,23 +46,23 @@ func (d *Dao) SetConfig(key string, config *Config) error {
 }
 
 // GetConfig retrieves a key's config
-func (d *Dao) GetConfig(key string) (*Config, error) {
+func (d *Dao) GetConfig(key string) (*Config, bool, error) {
 	configKey := fmt.Sprintf(configKeyFormat, key)
 	configString, found, err := d.xredisClient.Get(configKey)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	if !found {
-		return &Config{}, nil
+		return nil, false, nil
 	}
 
 	var config *Config
 	err = conversions.Structify(configString, &config)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
-	return config, nil
+	return config, true, nil
 }
 
 // Remove an item

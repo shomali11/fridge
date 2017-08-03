@@ -70,9 +70,13 @@ func (c *Client) Get(key string, options ...item.QueryConfigOption) (string, boo
 	queryConfig := newQueryConfig(options...)
 	restock := queryConfig.Restock
 
-	itemConfig, err := c.itemDao.GetConfig(key)
+	itemConfig, found, err := c.itemDao.GetConfig(key)
 	if err != nil {
 		return empty, false, err
+	}
+
+	if !found {
+		itemConfig = c.newDefaultItemConfig()
 	}
 
 	cachedValue, found, err := c.itemDao.Get(key)
@@ -159,6 +163,10 @@ func (c *Client) restock(key string, callback func() (string, error)) (string, b
 		return empty, false, err
 	}
 	return result, true, nil
+}
+
+func (c *Client) newDefaultItemConfig() *item.Config {
+	return &item.Config{BestBy: c.config.defaultBestBy, UseBy: c.config.defaultUseBy}
 }
 
 func newItemConfig(config *Config, options ...item.ConfigOption) *item.Config {
