@@ -42,10 +42,7 @@ func (d *Dao) SetConfig(key string, config *Config) error {
 
 	configKey := fmt.Sprintf(configKeyFormat, key)
 	_, err = d.xredisClient.Set(configKey, timestampString)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 // GetConfig retrieves a key's config
