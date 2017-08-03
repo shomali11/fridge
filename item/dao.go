@@ -47,8 +47,8 @@ func (d *Dao) SetConfig(key string, config *Config) error {
 
 // GetConfig retrieves a key's config
 func (d *Dao) GetConfig(key string) (*Config, error) {
-	timestampKey := fmt.Sprintf(configKeyFormat, key)
-	configString, found, err := d.xredisClient.Get(timestampKey)
+	configKey := fmt.Sprintf(configKeyFormat, key)
+	configString, found, err := d.xredisClient.Get(configKey)
 	if err != nil {
 		return nil, err
 	}
