@@ -1,4 +1,4 @@
-package item
+package fridge
 
 import (
 	"fmt"
@@ -10,11 +10,6 @@ import (
 const (
 	configKeyFormat = "%s.config"
 )
-
-// NewDao creates a new dao object
-func NewDao(client *xredis.Client) *Dao {
-	return &Dao{xredisClient: client}
-}
 
 // Dao controls access to redis
 type Dao struct {
@@ -32,10 +27,10 @@ func (d *Dao) Set(key string, value string, timeout int64) error {
 	return err
 }
 
-// SetConfig stores a key's config
-func (d *Dao) SetConfig(key string, config *Config) error {
-	config.Timestamp = time.Now().UTC()
-	timestampString, err := conversions.Stringify(config)
+// SetStorageDetails stores a key's defaults
+func (d *Dao) SetStorageDetails(key string, storageDetails *StorageDetails) error {
+	storageDetails.Timestamp = time.Now().UTC()
+	timestampString, err := conversions.Stringify(storageDetails)
 	if err != nil {
 		return err
 	}
@@ -45,8 +40,8 @@ func (d *Dao) SetConfig(key string, config *Config) error {
 	return err
 }
 
-// GetConfig retrieves a key's config
-func (d *Dao) GetConfig(key string) (*Config, bool, error) {
+// GetStorageDetails retrieves a key's storage details
+func (d *Dao) GetStorageDetails(key string) (*StorageDetails, bool, error) {
 	configKey := fmt.Sprintf(configKeyFormat, key)
 	configString, found, err := d.xredisClient.Get(configKey)
 	if err != nil {
@@ -57,12 +52,12 @@ func (d *Dao) GetConfig(key string) (*Config, bool, error) {
 		return nil, false, nil
 	}
 
-	var config *Config
-	err = conversions.Structify(configString, &config)
+	var storageDetails *StorageDetails
+	err = conversions.Structify(configString, &storageDetails)
 	if err != nil {
 		return nil, false, err
 	}
-	return config, true, nil
+	return storageDetails, true, nil
 }
 
 // Remove an item
@@ -81,4 +76,8 @@ func (d *Dao) Ping() error {
 // Close closes resources
 func (d *Dao) Close() error {
 	return d.xredisClient.Close()
+}
+
+func newDao(redisClient *RedisClient) *Dao {
+	return &Dao{xredisClient: redisClient.xredisClient}
 }

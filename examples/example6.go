@@ -3,13 +3,12 @@ package main
 import (
 	"fmt"
 	"github.com/shomali11/fridge"
-	"github.com/shomali11/fridge/item"
-	"github.com/shomali11/xredis"
 	"time"
 )
 
 func main() {
-	client := fridge.NewClient(xredis.DefaultClient(), fridge.WithDefaultDurations(time.Second, 2*time.Second))
+	redisClient := fridge.NewRedisClient()
+	client := fridge.NewClient(redisClient, fridge.WithDefaultDurations(time.Second, 2*time.Second))
 	defer client.Close()
 
 	client.HandleEvent(func(event *fridge.Event) {
@@ -40,19 +39,19 @@ func main() {
 	client.Put("food1", "Pizza")
 	client.Put("food2", "Milk")
 
-	client.Get("food1", item.WithRestock(restock))
+	client.Get("food1", fridge.WithRestock(restock))
 	client.Get("food2")
 	client.Get("food3")
 
 	time.Sleep(time.Second)
 
-	client.Get("food1", item.WithRestock(restock))
+	client.Get("food1", fridge.WithRestock(restock))
 	client.Get("food2")
 	client.Get("food3")
 
 	time.Sleep(2 * time.Second)
 
-	client.Get("food1", item.WithRestock(restock))
+	client.Get("food1", fridge.WithRestock(restock))
 	client.Get("food2")
 	client.Get("food3")
 

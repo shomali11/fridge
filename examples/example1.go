@@ -3,11 +3,11 @@ package main
 import (
 	"fmt"
 	"github.com/shomali11/fridge"
-	"github.com/shomali11/xredis"
 )
 
 func main() {
-	client := fridge.NewClient(xredis.DefaultClient())
+	redisClient := fridge.NewRedisClient()
+	client := fridge.NewClient(redisClient)
 	defer client.Close()
 
 	fmt.Println(client.Ping())

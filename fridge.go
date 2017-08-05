@@ -2,8 +2,6 @@ package fridge
 
 import (
 	"errors"
-	"github.com/shomali11/fridge/item"
-	"github.com/shomali11/xredis"
 	"time"
 )
 
@@ -35,11 +33,11 @@ const (
 	invalidDurationsError = "Invalid 'best by' and 'use by' durations"
 )
 
-// NewClient returns a client using an xredis client
-func NewClient(xredisClient *xredis.Client, options ...ConfigOption) *Client {
+// NewClient returns a client
+func NewClient(redisClient *RedisClient, options ...DefaultsOption) *Client {
 	client := &Client{
-		config:   newConfig(options...),
-		itemDao:  item.NewDao(xredisClient),
+		defaults: newDefaults(options...),
+		dao:      newDao(redisClient),
 		eventBus: newEventBus(),
 	}
 	return client
@@ -47,24 +45,24 @@ func NewClient(xredisClient *xredis.Client, options ...ConfigOption) *Client {
 
 // Client fridge client
 type Client struct {
-	config   *Config
-	itemDao  *item.Dao
+	defaults *Defaults
+	dao      *Dao
 	eventBus *EventBus
 }
 
 // Put an item
-func (c *Client) Put(key string, value string, options ...item.ConfigOption) error {
-	itemConfig := newItemConfig(c.config, options...)
-	if itemConfig.BestBy > itemConfig.UseBy {
+func (c *Client) Put(key string, value string, options ...StorageOption) error {
+	storageDetails := newStorageDetails(c.defaults, options...)
+	if storageDetails.BestBy > storageDetails.UseBy {
 		return errors.New(invalidDurationsError)
 	}
 
-	err := c.itemDao.SetConfig(key, itemConfig)
+	err := c.dao.SetStorageDetails(key, storageDetails)
 	if err != nil {
 		return err
 	}
 
-	err = c.itemDao.Set(key, value, itemConfig.GetUseByInSeconds())
+	err = c.dao.Set(key, value, storageDetails.GetUseByInSeconds())
 	if err != nil {
 		return err
 	}
@@ -72,11 +70,11 @@ func (c *Client) Put(key string, value string, options ...item.ConfigOption) err
 }
 
 // Get an item
-func (c *Client) Get(key string, options ...item.QueryConfigOption) (string, bool, error) {
-	queryConfig := newQueryConfig(options...)
-	restock := queryConfig.Restock
+func (c *Client) Get(key string, options ...RetrievalOption) (string, bool, error) {
+	retrievalDetails := newRetrievalDetails(options...)
+	restock := retrievalDetails.Restock
 
-	itemConfig, found, err := c.itemDao.GetConfig(key)
+	storageDetails, found, err := c.dao.GetStorageDetails(key)
 	if err != nil {
 		return empty, false, err
 	}
@@ -86,7 +84,7 @@ func (c *Client) Get(key string, options ...item.QueryConfigOption) (string, boo
 		return empty, false, err
 	}
 
-	cachedValue, found, err := c.itemDao.Get(key)
+	cachedValue, found, err := c.dao.Get(key)
 	if err != nil {
 		return empty, false, err
 	}
@@ -97,12 +95,12 @@ func (c *Client) Get(key string, options ...item.QueryConfigOption) (string, boo
 	}
 
 	now := time.Now().UTC()
-	if now.Before(itemConfig.Timestamp.Add(itemConfig.BestBy)) {
+	if now.Before(storageDetails.Timestamp.Add(storageDetails.BestBy)) {
 		go c.publish(key, Fresh)
 		return cachedValue, true, nil
 	}
 
-	if now.Before(itemConfig.Timestamp.Add(itemConfig.UseBy)) {
+	if now.Before(storageDetails.Timestamp.Add(storageDetails.UseBy)) {
 		go c.publish(key, Cold)
 		go c.restockAndCompare(key, cachedValue, restock)
 		return cachedValue, true, nil
@@ -114,17 +112,17 @@ func (c *Client) Get(key string, options ...item.QueryConfigOption) (string, boo
 
 // Remove an item
 func (c *Client) Remove(key string) error {
-	return c.itemDao.Remove(key)
+	return c.dao.Remove(key)
 }
 
 // Ping pings redis
 func (c *Client) Ping() error {
-	return c.itemDao.Ping()
+	return c.dao.Ping()
 }
 
 // Close closes resources
 func (c *Client) Close() error {
-	return c.itemDao.Close()
+	return c.dao.Close()
 }
 
 // HandleEvent overrides the default handleEvent callback
@@ -162,7 +160,7 @@ func (c *Client) restock(key string, callback func() (string, error)) (string, b
 	go c.publish(key, Refresh)
 
 	bestBy, useBy := c.getDurations(key)
-	err = c.Put(key, result, item.WithDurations(bestBy, useBy))
+	err = c.Put(key, result, WithDurations(bestBy, useBy))
 	if err != nil {
 		return empty, false, err
 	}
@@ -170,29 +168,13 @@ func (c *Client) restock(key string, callback func() (string, error)) (string, b
 }
 
 func (c *Client) getDurations(key string) (time.Duration, time.Duration) {
-	bestBy := c.config.defaultBestBy
-	useBy := c.config.defaultUseBy
+	bestBy := c.defaults.BestBy
+	useBy := c.defaults.UseBy
 
-	itemConfig, found, err := c.itemDao.GetConfig(key)
+	itemConfig, found, err := c.dao.GetStorageDetails(key)
 	if found && err == nil {
 		bestBy = itemConfig.BestBy
 		useBy = itemConfig.UseBy
 	}
 	return bestBy, useBy
-}
-
-func newItemConfig(config *Config, options ...item.ConfigOption) *item.Config {
-	itemConfig := &item.Config{BestBy: config.defaultBestBy, UseBy: config.defaultUseBy}
-	for _, option := range options {
-		option(itemConfig)
-	}
-	return itemConfig
-}
-
-func newQueryConfig(options ...item.QueryConfigOption) *item.QueryConfig {
-	queryConfig := &item.QueryConfig{}
-	for _, option := range options {
-		option(queryConfig)
-	}
-	return queryConfig
 }
