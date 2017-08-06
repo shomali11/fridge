@@ -47,7 +47,7 @@ govendor fetch github.com/shomali11/fridge
 
 ## Example 1
 
-Using `NewClient` with a default `xredis` client
+Using `NewRedisClient` with a default settings for a redis client
 
 ```go
 package main
@@ -55,11 +55,11 @@ package main
 import (
 	"fmt"
 	"github.com/shomali11/fridge"
-	"github.com/shomali11/xredis"
 )
 
 func main() {
-	client := fridge.NewClient(xredis.DefaultClient())
+	redisClient := fridge.NewRedisClient()
+	client := fridge.NewClient(redisClient)
 	defer client.Close()
 
 	fmt.Println(client.Ping())
@@ -74,6 +74,33 @@ Output
 
 ## Example 2
 
+Using `NewRedisClient` with a modified settings for a redis client
+
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/shomali11/fridge"
+)
+
+func main() {
+	redisClient := fridge.NewRedisClient(fridge.WithHost("localhost"), fridge.WithPort(6379))
+	client := fridge.NewClient(redisClient)
+	defer client.Close()
+
+	fmt.Println(client.Ping())
+}
+```
+
+Output
+
+```
+<nil>
+```
+
+## Example 3
+
 Using `Put`, `Get` & `Remove` to show how to put, get and remove an item.
 _Note: That we are using a default client that has a default Best By of 1 hour and Use By of 1 Day for all keys_
 
@@ -83,17 +110,17 @@ package main
 import (
 	"fmt"
 	"github.com/shomali11/fridge"
-	"github.com/shomali11/xredis"
 )
 
 func main() {
-	client := fridge.NewClient(xredis.DefaultClient())
+	redisClient := fridge.NewRedisClient()
+	client := fridge.NewClient(redisClient)
 	defer client.Close()
 
 	fmt.Println(client.Put("food", "Pizza"))
-	fmt.Println(client.Get("food"))          
-	fmt.Println(client.Remove("food"))       
-	fmt.Println(client.Get("food"))          
+	fmt.Println(client.Get("food"))
+	fmt.Println(client.Remove("food"))
+	fmt.Println(client.Get("food"))
 }
 ```
 
@@ -106,7 +133,7 @@ Pizza true <nil>
  false <nil>
 ```
 
-## Example 3
+## Example 4
 
 Using `WithDefaultDurations` to override the default Best By and Use By durations for all keys
 
@@ -116,58 +143,15 @@ package main
 import (
 	"fmt"
 	"github.com/shomali11/fridge"
-	"github.com/shomali11/xredis"
 	"time"
 )
 
 func main() {
-	client := fridge.NewClient(xredis.DefaultClient(), fridge.WithDefaultDurations(time.Second, 2*time.Second))
+	redisClient := fridge.NewRedisClient()
+	client := fridge.NewClient(redisClient, fridge.WithDefaultDurations(time.Second, 2*time.Second))
 	defer client.Close()
 
 	fmt.Println(client.Put("food", "Pizza"))
-	fmt.Println(client.Get("food"))
-
-	time.Sleep(time.Second)
-
-	fmt.Println(client.Get("food"))
-
-	time.Sleep(2 * time.Second)
-
-	fmt.Println(client.Get("food"))
-	fmt.Println(client.Remove("food"))
-}
-```
-
-Output
-
-```
-<nil>
-Pizza true <nil>
-Pizza true <nil>
- false <nil>
-<nil>
-```
-
-## Example 4
-
-Using `Put` to show how to put an item and override that item's durations.
-
-```go
-package main
-
-import (
-	"fmt"
-	"github.com/shomali11/fridge"
-	"github.com/shomali11/fridge/item"
-	"github.com/shomali11/xredis"
-	"time"
-)
-
-func main() {
-	client := fridge.NewClient(xredis.DefaultClient())
-	defer client.Close()
-
-	fmt.Println(client.Put("food", "Pizza", item.WithDurations(time.Second, 2*time.Second)))
 	fmt.Println(client.Get("food"))
 
 	time.Sleep(time.Second)
@@ -193,6 +177,48 @@ Pizza true <nil>
 
 ## Example 5
 
+Using `Put` to show how to put an item and override that item's durations.
+
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/shomali11/fridge"
+	"time"
+)
+
+func main() {
+	redisClient := fridge.NewRedisClient()
+	client := fridge.NewClient(redisClient)
+	defer client.Close()
+
+	fmt.Println(client.Put("food", "Pizza", fridge.WithDurations(time.Second, 2*time.Second)))
+	fmt.Println(client.Get("food"))
+
+	time.Sleep(time.Second)
+
+	fmt.Println(client.Get("food"))
+
+	time.Sleep(2 * time.Second)
+
+	fmt.Println(client.Get("food"))
+	fmt.Println(client.Remove("food"))
+}
+```
+
+Output
+
+```
+<nil>
+Pizza true <nil>
+Pizza true <nil>
+ false <nil>
+<nil>
+```
+
+## Example 6
+
 Using `Get` to show how to retrieve an item while providing a restocking mechanism.
 
 ```go
@@ -201,29 +227,28 @@ package main
 import (
 	"fmt"
 	"github.com/shomali11/fridge"
-	"github.com/shomali11/fridge/item"
-	"github.com/shomali11/xredis"
 	"time"
 )
 
 func main() {
-	client := fridge.NewClient(xredis.DefaultClient())
+	redisClient := fridge.NewRedisClient()
+	client := fridge.NewClient(redisClient)
 	defer client.Close()
 
 	restock := func() (string, error) {
 		return "Hot Pizza", nil
 	}
 
-	fmt.Println(client.Put("food", "Pizza", item.WithDurations(time.Second, 2*time.Second)))
-	fmt.Println(client.Get("food", item.WithRestock(restock)))
+	fmt.Println(client.Put("food", "Pizza", fridge.WithDurations(time.Second, 2*time.Second)))
+	fmt.Println(client.Get("food", fridge.WithRestock(restock)))
 
 	time.Sleep(time.Second)
 
-	fmt.Println(client.Get("food", item.WithRestock(restock)))
+	fmt.Println(client.Get("food", fridge.WithRestock(restock)))
 
 	time.Sleep(2 * time.Second)
 
-	fmt.Println(client.Get("food", item.WithRestock(restock)))
+	fmt.Println(client.Get("food", fridge.WithRestock(restock)))
 	fmt.Println(client.Remove("food"))
 }
 ```
@@ -238,7 +263,7 @@ Hot Pizza true <nil>
 <nil>
 ```
 
-## Example 6
+## Example 7
 
 Using `HandleEvent` to pass a callback to access the stream of events generated
 
@@ -248,13 +273,12 @@ package main
 import (
 	"fmt"
 	"github.com/shomali11/fridge"
-	"github.com/shomali11/fridge/item"
-	"github.com/shomali11/xredis"
 	"time"
 )
 
 func main() {
-	client := fridge.NewClient(xredis.DefaultClient(), fridge.WithDefaultDurations(time.Second, 2*time.Second))
+	redisClient := fridge.NewRedisClient()
+	client := fridge.NewClient(redisClient, fridge.WithDefaultDurations(time.Second, 2*time.Second))
 	defer client.Close()
 
 	client.HandleEvent(func(event *fridge.Event) {
@@ -285,19 +309,19 @@ func main() {
 	client.Put("food1", "Pizza")
 	client.Put("food2", "Milk")
 
-	client.Get("food1", item.WithRestock(restock))
+	client.Get("food1", fridge.WithRestock(restock))
 	client.Get("food2")
 	client.Get("food3")
 
 	time.Sleep(time.Second)
 
-	client.Get("food1", item.WithRestock(restock))
+	client.Get("food1", fridge.WithRestock(restock))
 	client.Get("food2")
 	client.Get("food3")
 
 	time.Sleep(2 * time.Second)
 
-	client.Get("food1", item.WithRestock(restock))
+	client.Get("food1", fridge.WithRestock(restock))
 	client.Get("food2")
 	client.Get("food3")
 
