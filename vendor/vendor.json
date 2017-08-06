@@ -27,6 +27,18 @@
 			"revisionTime": "2016-01-10T10:55:54Z"
 		},
 		{
+			"checksumSHA1": "/DrucovBuKS5DOhT1TF0kDrluKI=",
+			"path": "github.com/shomali11/cmap",
+			"revision": "e65eef63052e054a85ed9af2b6f939a1ee2c2144",
+			"revisionTime": "2017-08-06T04:20:28Z"
+		},
+		{
+			"checksumSHA1": "FgJUfMgnUtliQGoaNeJi4hNm/QI=",
+			"path": "github.com/shomali11/eventbus",
+			"revision": "9d2c7d0e680e9516574becb377ff2b90a50293e9",
+			"revisionTime": "2017-08-06T05:07:26Z"
+		},
+		{
 			"checksumSHA1": "aemjNxOhRSmiPj/cuAgc/qFo/eg=",
 			"path": "github.com/shomali11/parallelizer",
 			"revision": "a1053f1f85672158fbd99b9bc0dd3943c9479ecb",
@@ -37,10 +49,10 @@
 			"revision": ""
 		},
 		{
-			"checksumSHA1": "4fUucDeOr03QppgZdMASYEqJBzg=",
+			"checksumSHA1": "CXeDXoBtv52rYXcAll7HHgN203k=",
 			"path": "github.com/shomali11/util",
-			"revision": "4f22e46befebd2a316b3c3400bfaff404febd39d",
-			"revisionTime": "2017-07-27T00:40:33Z"
+			"revision": "a3878addafcd0ecad0123deb35c23691b1fc1a2f",
+			"revisionTime": "2017-08-05T22:13:36Z"
 		},
 		{
 			"checksumSHA1": "yGj20Tdh4lWA0Cc9QHU4zf4vjcw=",
@@ -79,10 +91,10 @@
 			"revisionTime": "2017-07-27T00:40:33Z"
 		},
 		{
-			"checksumSHA1": "ktGev9fk/TcrdSBzzmiKK1okHFw=",
+			"checksumSHA1": "q5luNe1RfyiWXcSXhwUwMGQxzns=",
 			"path": "github.com/shomali11/util/hashes",
-			"revision": "4f22e46befebd2a316b3c3400bfaff404febd39d",
-			"revisionTime": "2017-07-27T00:40:33Z"
+			"revision": "a3878addafcd0ecad0123deb35c23691b1fc1a2f",
+			"revisionTime": "2017-08-05T22:13:36Z"
 		},
 		{
 			"checksumSHA1": "WGPXdzf6WyC4mH2tEIeFNJQTAUQ=",

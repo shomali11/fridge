@@ -2,6 +2,7 @@ package fridge
 
 import (
 	"errors"
+	"github.com/shomali11/eventbus"
 	"time"
 )
 
@@ -30,6 +31,7 @@ const (
 
 const (
 	empty                 = ""
+	fridgeEventbusTopic   = "fridge_events"
 	invalidDurationsError = "Invalid 'best by' and 'use by' durations"
 )
 
@@ -38,16 +40,37 @@ func NewClient(redisClient *RedisClient, options ...DefaultsOption) *Client {
 	client := &Client{
 		defaults: newDefaults(options...),
 		dao:      newDao(redisClient),
-		eventBus: newEventBus(),
 	}
+
+	bus := eventbus.NewClient()
+	bus.Subscribe(fridgeEventbusTopic, func(value interface{}) {
+		event, ok := value.(*Event)
+		if !ok {
+			return
+		}
+
+		if client.handleEvent == nil {
+			return
+		}
+		client.handleEvent(event)
+	})
+
+	client.bus = bus
 	return client
+}
+
+// Fridge event
+type Event struct {
+	Key  string
+	Type string
 }
 
 // Client fridge client
 type Client struct {
-	defaults *Defaults
-	dao      *Dao
-	eventBus *EventBus
+	defaults    *Defaults
+	dao         *Dao
+	bus         *eventbus.Client
+	handleEvent func(event *Event)
 }
 
 // Put an item
@@ -80,7 +103,7 @@ func (c *Client) Get(key string, options ...RetrievalOption) (string, bool, erro
 	}
 
 	if !found {
-		go c.publish(key, NotFound)
+		c.publish(key, NotFound)
 		return empty, false, err
 	}
 
@@ -90,23 +113,23 @@ func (c *Client) Get(key string, options ...RetrievalOption) (string, bool, erro
 	}
 
 	if !found {
-		go c.publish(key, Expired)
+		c.publish(key, Expired)
 		return c.restockAndCompare(key, cachedValue, restock)
 	}
 
 	now := time.Now().UTC()
 	if now.Before(storageDetails.Timestamp.Add(storageDetails.BestBy)) {
-		go c.publish(key, Fresh)
+		c.publish(key, Fresh)
 		return cachedValue, true, nil
 	}
 
 	if now.Before(storageDetails.Timestamp.Add(storageDetails.UseBy)) {
-		go c.publish(key, Cold)
+		c.publish(key, Cold)
 		go c.restockAndCompare(key, cachedValue, restock)
 		return cachedValue, true, nil
 	}
 
-	go c.publish(key, Expired)
+	c.publish(key, Expired)
 	return c.restockAndCompare(key, cachedValue, restock)
 }
 
@@ -122,16 +145,17 @@ func (c *Client) Ping() error {
 
 // Close closes resources
 func (c *Client) Close() error {
+	c.bus.Close()
 	return c.dao.Close()
 }
 
 // HandleEvent overrides the default handleEvent callback
 func (c *Client) HandleEvent(handleEvent func(event *Event)) {
-	c.eventBus.HandleEvent(handleEvent)
+	c.handleEvent = handleEvent
 }
 
 func (c *Client) publish(key string, eventType string) {
-	c.eventBus.Publish(key, eventType)
+	c.bus.Publish(fridgeEventbusTopic, &Event{Key: key, Type: eventType})
 }
 
 func (c *Client) restockAndCompare(key string, cachedValue string, callback func() (string, error)) (string, bool, error) {
