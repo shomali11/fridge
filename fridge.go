@@ -31,7 +31,7 @@ const (
 
 const (
 	empty                 = ""
-	fridgeEventbusTopic   = "fridge_events"
+	eventsTopic           = "fridge_events"
 	invalidDurationsError = "Invalid 'best by' and 'use by' durations"
 )
 
@@ -43,7 +43,7 @@ func NewClient(redisClient *RedisClient, options ...DefaultsOption) *Client {
 	}
 
 	bus := eventbus.NewClient()
-	bus.Subscribe(fridgeEventbusTopic, func(value interface{}) {
+	bus.Subscribe(eventsTopic, func(value interface{}) {
 		event, ok := value.(*Event)
 		if !ok {
 			return
@@ -155,7 +155,7 @@ func (c *Client) HandleEvent(handleEvent func(event *Event)) {
 }
 
 func (c *Client) publish(key string, eventType string) {
-	c.bus.Publish(fridgeEventbusTopic, &Event{Key: key, Type: eventType})
+	c.bus.Publish(eventsTopic, &Event{Key: key, Type: eventType})
 }
 
 func (c *Client) restockAndCompare(key string, cachedValue string, callback func() (string, error)) (string, bool, error) {
