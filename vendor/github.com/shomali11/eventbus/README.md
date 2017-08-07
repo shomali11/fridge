@@ -1,6 +1,10 @@
 # eventbus [![Go Report Card](https://goreportcard.com/badge/github.com/shomali11/eventbus)](https://goreportcard.com/report/github.com/shomali11/eventbus) [![GoDoc](https://godoc.org/github.com/shomali11/eventbus?status.svg)](https://godoc.org/github.com/shomali11/eventbus) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-An event bus
+An event bus to facilitate publishing and subscribing to events via topics
+
+## Features
+
+* Non blocking publishing of events
 
 ## Usage
 

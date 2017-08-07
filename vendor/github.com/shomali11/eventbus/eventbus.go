@@ -2,6 +2,7 @@ package eventbus
 
 import (
 	"github.com/shomali11/cmap"
+	"sync"
 )
 
 const (
@@ -14,6 +15,7 @@ func NewClient() *Client {
 	client := &Client{
 		events:   events,
 		registry: cmap.NewShardedConcurrentMap(),
+		lock:     &sync.RWMutex{},
 	}
 
 	go func(client *Client) {
@@ -45,6 +47,7 @@ type Event struct {
 type Client struct {
 	events   chan *Event
 	registry *cmap.ShardedConcurrentMap
+	lock     *sync.RWMutex
 }
 
 // Publish publishes an event
@@ -64,14 +67,17 @@ func (c *Client) Publish(topic string, value interface{}) {
 
 // Subscribe subscribes to a topic
 func (c *Client) Subscribe(topic string, handler EventHandler) {
+	c.lock.Lock()
+
 	handlers := []EventHandler{}
 	existingHandlers, ok := c.registry.Get(topic)
 	if ok {
 		handlers = existingHandlers.([]EventHandler)
 	}
-
 	handlers = append(handlers, handler)
 	c.registry.Set(topic, handlers)
+
+	c.lock.Unlock()
 }
 
 // Close closes eventbus
