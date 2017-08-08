@@ -27,26 +27,22 @@
 			"revisionTime": "2016-01-10T10:55:54Z"
 		},
 		{
-			"checksumSHA1": "/DrucovBuKS5DOhT1TF0kDrluKI=",
-			"path": "github.com/shomali11/cmap",
-			"revision": "e65eef63052e054a85ed9af2b6f939a1ee2c2144",
-			"revisionTime": "2017-08-06T04:20:28Z"
+			"checksumSHA1": "Bfs6zoLtWb2HPqRLY+Ggd8CVEJs=",
+			"path": "github.com/shomali11/eventbus",
+			"revision": "d11cdc7b06c3d8d4f02144fdda6b9b5c09238ce6",
+			"revisionTime": "2017-08-08T00:35:16Z"
 		},
 		{
-			"checksumSHA1": "ae+vKOxti7TDHGGFQgbHiCOTF+4=",
-			"path": "github.com/shomali11/eventbus",
-			"revision": "294f047b53bbe620777a4c6b31c4525f32069714",
-			"revisionTime": "2017-08-07T06:09:54Z"
+			"checksumSHA1": "2mvyXqvwYTd4JrHdwP9QpUJUat4=",
+			"path": "github.com/shomali11/maps",
+			"revision": "e95c1a1630886e6dc777e8b2e1d626d669e6a5a0",
+			"revisionTime": "2017-08-08T00:15:42Z"
 		},
 		{
 			"checksumSHA1": "aemjNxOhRSmiPj/cuAgc/qFo/eg=",
 			"path": "github.com/shomali11/parallelizer",
 			"revision": "a1053f1f85672158fbd99b9bc0dd3943c9479ecb",
 			"revisionTime": "2017-06-27T04:45:40Z"
-		},
-		{
-			"path": "github.com/shomali11/redix",
-			"revision": ""
 		},
 		{
 			"checksumSHA1": "CXeDXoBtv52rYXcAll7HHgN203k=",

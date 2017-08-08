@@ -16,14 +16,14 @@ govendor fetch github.com/shomali11/eventbus
 
 ## Dependencies
 
-* `cmap` [github.com/shomali11/cmap](https://github.com/shomali11/cmap)
+* `maps` [github.com/shomali11/maps](https://github.com/shomali11/maps)
 * `util` [github.com/shomali11/util](https://github.com/shomali11/util)
 
 # Examples
 
 ## Example 1
 
-Using `NewConcurrentMap` to create concurrent map
+Using `NewClient` to create an eventbus.
 
 ```go
 package main
@@ -38,7 +38,7 @@ func main() {
 
 ## Example 2
 
-Using `NewShardedConcurrentMap` to create a sharded concurrent map. _Default shards are 16_
+Using `Publish` and `Subscribe` to publish and listen to events
 
 ```go
 package main

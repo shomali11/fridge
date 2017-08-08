@@ -39,6 +39,7 @@ govendor fetch github.com/shomali11/fridge
 
 ## Dependencies
 
+* `eventbus` [github.com/shomali11/eventbus](https://github.com/shomali11/eventbus)
 * `xredis` [github.com/shomali11/xredis](https://github.com/shomali11/xredis)
 * `util` [github.com/shomali11/util](https://github.com/shomali11/util)
 
