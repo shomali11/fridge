@@ -61,6 +61,25 @@ func (c *ShardedConcurrentMap) Size() int {
 	return sum
 }
 
+// IsEmpty concurrent check of map's emptiness
+func (c *ShardedConcurrentMap) IsEmpty() bool {
+	for _, concurrentMap := range c.concurrentMaps {
+		if !concurrentMap.IsEmpty() {
+			return false
+		}
+	}
+	return true
+}
+
+// Keys concurrent retrieval of keys from map
+func (c *ShardedConcurrentMap) Keys() []string {
+	keys := []string{}
+	for _, concurrentMap := range c.concurrentMaps {
+		keys = append(keys, concurrentMap.Keys()...)
+	}
+	return keys
+}
+
 // Remove concurrent remove from map
 func (c *ShardedConcurrentMap) Clear() {
 	for _, concurrentMap := range c.concurrentMaps {

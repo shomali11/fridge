@@ -52,6 +52,24 @@ func (c *ConcurrentMap) Size() int {
 	return size
 }
 
+// IsEmpty concurrent check of map's emptiness
+func (c *ConcurrentMap) IsEmpty() bool {
+	return c.Size() == 0
+}
+
+// Keys concurrent retrieval of keys from map
+func (c *ConcurrentMap) Keys() []string {
+	c.lock.RLock()
+	keys := make([]string, len(c.internalMap))
+	i := 0
+	for key := range c.internalMap {
+		keys[i] = key
+		i++
+	}
+	c.lock.RUnlock()
+	return keys
+}
+
 // Clear concurrent map
 func (c *ConcurrentMap) Clear() {
 	c.lock.Lock()
