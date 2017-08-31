@@ -174,6 +174,8 @@ func (c *Client) restock(key string, cachedValue string, storageDetails *Storage
 
 	freshValue, err := callback()
 	if err != nil {
+		storageDetails.Restocking = false
+		c.dao.SetStorageDetails(key, storageDetails)
 		return empty, false, err
 	}
 
