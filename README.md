@@ -338,18 +338,15 @@ Output:
 Key: food1 - Woohoo! it is fresh!
 Key: food2 - Woohoo! it is fresh!
 Key: food3 - Oops! Did not find it.
-Key: food3 - Oh no! It is out of stock.
 Key: food1 - Not fresh! But not bad either!
 Key: food1 - Yay! Getting a new one!
 Key: food1 - Interesting! It has not changed.
 Key: food2 - Not fresh! But not bad either!
 Key: food2 - Oh no! It is out of stock.
 Key: food3 - Oops! Did not find it.
-Key: food3 - Oh no! It is out of stock.
 Key: food1 - Sigh. It has expired!
 Key: food1 - Yay! Getting a new one!
 Key: food2 - Sigh. It has expired!
 Key: food2 - Oh no! It is out of stock.
 Key: food3 - Oops! Did not find it.
-Key: food3 - Oh no! It is out of stock.
 ```
