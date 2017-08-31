@@ -114,7 +114,7 @@ func (c *Client) Get(key string, options ...RetrievalOption) (string, bool, erro
 
 	if !found {
 		c.publish(key, Expired)
-		return c.restockAndCompare(key, cachedValue, restock)
+		return c.restock(key, cachedValue, storageDetails, restock)
 	}
 
 	now := time.Now().UTC()
@@ -125,12 +125,14 @@ func (c *Client) Get(key string, options ...RetrievalOption) (string, bool, erro
 
 	if now.Before(storageDetails.Timestamp.Add(storageDetails.UseBy)) {
 		c.publish(key, Cold)
-		go c.restockAndCompare(key, cachedValue, restock)
+		if !storageDetails.Restocking {
+			go c.restock(key, cachedValue, storageDetails, restock)
+		}
 		return cachedValue, true, nil
 	}
 
 	c.publish(key, Expired)
-	return c.restockAndCompare(key, cachedValue, restock)
+	return c.restock(key, cachedValue, storageDetails, restock)
 }
 
 // Remove an item
@@ -158,47 +160,33 @@ func (c *Client) publish(key string, eventType string) {
 	c.bus.Publish(eventsTopic, &Event{Key: key, Type: eventType})
 }
 
-func (c *Client) restockAndCompare(key string, cachedValue string, callback func() (string, error)) (string, bool, error) {
-	newValue, found, err := c.restock(key, callback)
-	if err != nil || !found {
-		return empty, found, err
-	}
-
-	if newValue == cachedValue {
-		go c.publish(key, Unchanged)
-	}
-	return newValue, true, nil
-}
-
-func (c *Client) restock(key string, callback func() (string, error)) (string, bool, error) {
+func (c *Client) restock(key string, cachedValue string, storageDetails *StorageDetails, callback func() (string, error)) (string, bool, error) {
 	if callback == nil {
-		go c.publish(key, OutOfStock)
+		c.publish(key, OutOfStock)
 		return empty, false, nil
 	}
 
-	result, err := callback()
+	storageDetails.Restocking = true
+	err := c.dao.SetStorageDetails(key, storageDetails)
 	if err != nil {
 		return empty, false, err
 	}
 
-	go c.publish(key, Refresh)
-
-	bestBy, useBy := c.getDurations(key)
-	err = c.Put(key, result, WithDurations(bestBy, useBy))
+	freshValue, err := callback()
 	if err != nil {
 		return empty, false, err
 	}
-	return result, true, nil
-}
 
-func (c *Client) getDurations(key string) (time.Duration, time.Duration) {
-	bestBy := c.defaults.BestBy
-	useBy := c.defaults.UseBy
+	c.publish(key, Refresh)
 
-	itemConfig, found, err := c.dao.GetStorageDetails(key)
-	if found && err == nil {
-		bestBy = itemConfig.BestBy
-		useBy = itemConfig.UseBy
+	bestBy, useBy := storageDetails.BestBy, storageDetails.UseBy
+	err = c.Put(key, freshValue, WithDurations(bestBy, useBy))
+	if err != nil {
+		return empty, false, err
 	}
-	return bestBy, useBy
+
+	if freshValue == cachedValue {
+		c.publish(key, Unchanged)
+	}
+	return freshValue, true, nil
 }

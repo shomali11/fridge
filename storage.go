@@ -17,9 +17,10 @@ func WithDurations(bestBy time.Duration, useBy time.Duration) StorageOption {
 
 // StorageDetails contains storage information
 type StorageDetails struct {
-	Timestamp time.Time
-	BestBy    time.Duration
-	UseBy     time.Duration
+	Timestamp  time.Time
+	Restocking bool
+	BestBy     time.Duration
+	UseBy      time.Duration
 }
 
 // GetUseByInSeconds returns Use By duration in seconds
