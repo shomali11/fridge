@@ -1,26 +1,27 @@
 # fridge [![Go Report Card](https://goreportcard.com/badge/github.com/shomali11/fridge)](https://goreportcard.com/report/github.com/shomali11/fridge) [![GoDoc](https://godoc.org/github.com/shomali11/fridge?status.svg)](https://godoc.org/github.com/shomali11/fridge) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-`fridge` is a redis cache that resembles storing items in a fridge and retrieving them later on.
+`fridge` is a layer applied on top of a cache that makes interacting with it similar to interacting with a fridge.
+Items are tagged with a "Best By" and "Use By" timestamps, stored, restocked and retrieved.
 
-Typically when using a cache, one would store some value with a TTL.
+Typically when using a cache, one would store some value along with a timeout.
 The value could be retrieved from the cache as long as it has not expired.
-If the value had expired, then a database call is usually made to retrieve the value, put it back in the cache and return it.
+If the value had expired, then an external call _(Such as a database query)_ is usually made to retrieve the value, put it back in the cache and return it.
 
 With `fridge`, we are taking a slightly different approach.
-Before storing a value in the fridge _(cache)_, one must register its key with a "Best By" and a "Use By" durations.
-When retrieving the value from the fridge _(cache)_, a "restock" function can be provided to refresh the value.
+Before storing a value in the `fridge`, one tags its key with a **Best By** and a **Use By** durations.
+When retrieving the value, a **Restock** function can be provided to refresh the value.
 
-When attempting to retrieve a value from the fridge _(cache)_, there are multiple scenarios that could happen:
- * If the item has not passed its "Best By" duration _(it is "fresh")_
+When attempting to retrieve a value from the `fridge`, there are multiple scenarios that could happen:
+ * If the item has not passed its **Best By** duration _(it is **fresh**)_
    * Then the item is returned immediately.
- * If the item has passed its "Best By" duration but not its "Use By" duration _(Not "fresh" but not "expired" either)_
+ * If the item has passed its **Best By** duration but not its **Use By** duration _(Not **fresh** but not **expired** either)_
    * Then the item is returned immediately 
-   * But the "restock" function is called **asynchronously** to "refresh" the item.
- * If the item has passed its "Use By" duration _(it has "expired")_
-   * The "restock" function is called **synchronously** to retrieve a fresh item and return it.
+   * But the **Restock** function is called **asynchronously** to **refresh** the item.
+ * If the item has passed its **Use By** duration _(it has **expired**)_
+   * The **Restock** function is called **synchronously** to retrieve a fresh item and return it.
  * If the item was not found
    * It is treated similarly to an expired item
-   * The "restock" function is called **synchronously** to retrieve a fresh item and return it.
+   * The **Restock** function is called **synchronously** to retrieve a fresh item and return it.
 
 ## Why?
 
