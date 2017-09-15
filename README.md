@@ -48,7 +48,28 @@ govendor fetch github.com/shomali11/fridge
 
 ## Example 1
 
-Using `NewRedisClient` with a default settings for a redis client
+Using `NewClient` to create a new fridge client.
+_Note: `NewClient` accepts an object that implements the `Cache` interface which allows the user to use `fridge ` with any underlying implementation._
+
+```go
+// Cache is a Fridge cache interface
+type Cache interface {
+	// Get a value by key
+	Get(key string) (string, bool, error)
+
+	// Set a key value pair
+	Set(key string, value string, timeout time.Duration) error
+
+	// Remove a key
+	Remove(key string) error
+
+	// Ping to test connectivity
+	Ping() error
+
+	// Close to close resources
+	Close() error
+}
+```
 
 ```go
 package main
@@ -56,26 +77,48 @@ package main
 import (
 	"fmt"
 	"github.com/shomali11/fridge"
+	"time"
 )
 
+type SimpleCache struct {
+	memory map[string]string
+}
+
+func (c *SimpleCache) Get(key string) (string, bool, error) {
+	value, ok := c.memory[key]
+	return value, ok, nil
+}
+
+func (c *SimpleCache) Set(key string, value string, timeout time.Duration) error {
+	// We are not implementing the expiration to keep the example simple
+	c.memory[key] = value
+	return nil
+}
+
+func (c *SimpleCache) Remove(key string) error {
+	delete(c.memory, key)
+	return nil
+}
+
+func (c *SimpleCache) Ping() error {
+	return nil
+}
+
+func (c *SimpleCache) Close() error {
+	return nil
+}
+
 func main() {
-	redisClient := fridge.NewRedisClient()
-	client := fridge.NewClient(redisClient)
-	defer client.Close()
+	simpleCache := &SimpleCache{memory: make(map[string]string)}
+	client := fridge.NewClient(simpleCache)
 
 	fmt.Println(client.Ping())
 }
 ```
 
-Output
-
-```
-<nil>
-```
-
 ## Example 2
 
-Using `NewRedisClient` with a modified settings for a redis client
+Using `NewRedisCache` to use `fridge` with redis. _Note: `NewRedisCache` creates an redis client that implements the `Cache` interface_
 
 ```go
 package main
@@ -86,8 +129,8 @@ import (
 )
 
 func main() {
-	redisClient := fridge.NewRedisClient(fridge.WithHost("localhost"), fridge.WithPort(6379))
-	client := fridge.NewClient(redisClient)
+	redisCache := fridge.NewRedisCache()
+	client := fridge.NewClient(redisCache)
 	defer client.Close()
 
 	fmt.Println(client.Ping())
@@ -102,6 +145,33 @@ Output
 
 ## Example 3
 
+Using `NewRedisCache` with modified settings for a redis client
+
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/shomali11/fridge"
+)
+
+func main() {
+	redisCache := fridge.NewRedisCache(fridge.WithHost("localhost"), fridge.WithPort(6379))
+	client := fridge.NewClient(redisCache)
+	defer client.Close()
+
+	fmt.Println(client.Ping())
+}
+```
+
+Output
+
+```
+<nil>
+```
+
+## Example 4
+
 Using `Put`, `Get` & `Remove` to show how to put, get and remove an item.
 _Note: That we are using a default client that has a default Best By of 1 hour and Use By of 1 Day for all keys_
 
@@ -114,8 +184,8 @@ import (
 )
 
 func main() {
-	redisClient := fridge.NewRedisClient()
-	client := fridge.NewClient(redisClient)
+	redisCache := fridge.NewRedisCache()
+	client := fridge.NewClient(redisCache)
 	defer client.Close()
 
 	fmt.Println(client.Put("food", "Pizza"))
@@ -134,7 +204,7 @@ Pizza true <nil>
  false <nil>
 ```
 
-## Example 4
+## Example 5
 
 Using `WithDefaultDurations` to override the default Best By and Use By durations for all keys
 
@@ -148,8 +218,8 @@ import (
 )
 
 func main() {
-	redisClient := fridge.NewRedisClient()
-	client := fridge.NewClient(redisClient, fridge.WithDefaultDurations(time.Second, 2*time.Second))
+	redisCache := fridge.NewRedisCache()
+	client := fridge.NewClient(redisCache, fridge.WithDefaultDurations(time.Second, 2*time.Second))
 	defer client.Close()
 
 	fmt.Println(client.Put("food", "Pizza"))
@@ -176,7 +246,7 @@ Pizza true <nil>
 <nil>
 ```
 
-## Example 5
+## Example 6
 
 Using `Put` to show how to put an item and override that item's durations.
 
@@ -190,8 +260,8 @@ import (
 )
 
 func main() {
-	redisClient := fridge.NewRedisClient()
-	client := fridge.NewClient(redisClient)
+	redisCache := fridge.NewRedisCache()
+	client := fridge.NewClient(redisCache)
 	defer client.Close()
 
 	fmt.Println(client.Put("food", "Pizza", fridge.WithDurations(time.Second, 2*time.Second)))
@@ -218,7 +288,7 @@ Pizza true <nil>
 <nil>
 ```
 
-## Example 6
+## Example 7
 
 Using `Get` to show how to retrieve an item while providing a restocking mechanism.
 
@@ -232,8 +302,8 @@ import (
 )
 
 func main() {
-	redisClient := fridge.NewRedisClient()
-	client := fridge.NewClient(redisClient)
+	redisCache := fridge.NewRedisCache()
+	client := fridge.NewClient(redisCache)
 	defer client.Close()
 
 	restock := func() (string, error) {
@@ -264,7 +334,7 @@ Hot Pizza true <nil>
 <nil>
 ```
 
-## Example 7
+## Example 8
 
 Using `HandleEvent` to pass a callback to access the stream of events generated
 
@@ -278,8 +348,8 @@ import (
 )
 
 func main() {
-	redisClient := fridge.NewRedisClient()
-	client := fridge.NewClient(redisClient, fridge.WithDefaultDurations(time.Second, 2*time.Second))
+	redisCache := fridge.NewRedisCache()
+	client := fridge.NewClient(redisCache, fridge.WithDefaultDurations(time.Second, 2*time.Second))
 	defer client.Close()
 
 	client.HandleEvent(func(event *fridge.Event) {

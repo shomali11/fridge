@@ -23,11 +23,6 @@ type StorageDetails struct {
 	UseBy      time.Duration
 }
 
-// GetUseByInSeconds returns Use By duration in seconds
-func (c *StorageDetails) GetUseByInSeconds() int64 {
-	return int64(c.UseBy.Seconds())
-}
-
 func newStorageDetails(defaults *Defaults, options ...StorageOption) *StorageDetails {
 	storageDetails := &StorageDetails{BestBy: defaults.BestBy, UseBy: defaults.UseBy}
 	for _, option := range options {

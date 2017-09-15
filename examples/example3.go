@@ -6,12 +6,9 @@ import (
 )
 
 func main() {
-	redisClient := fridge.NewRedisClient()
-	client := fridge.NewClient(redisClient)
+	redisCache := fridge.NewRedisCache(fridge.WithHost("localhost"), fridge.WithPort(6379))
+	client := fridge.NewClient(redisCache)
 	defer client.Close()
 
-	fmt.Println(client.Put("food", "Pizza"))
-	fmt.Println(client.Get("food"))
-	fmt.Println(client.Remove("food"))
-	fmt.Println(client.Get("food"))
+	fmt.Println(client.Ping())
 }

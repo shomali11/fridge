@@ -7,11 +7,11 @@ import (
 )
 
 func main() {
-	redisClient := fridge.NewRedisClient()
-	client := fridge.NewClient(redisClient)
+	redisCache := fridge.NewRedisCache()
+	client := fridge.NewClient(redisCache, fridge.WithDefaultDurations(time.Second, 2*time.Second))
 	defer client.Close()
 
-	fmt.Println(client.Put("food", "Pizza", fridge.WithDurations(time.Second, 2*time.Second)))
+	fmt.Println(client.Put("food", "Pizza"))
 	fmt.Println(client.Get("food"))
 
 	time.Sleep(time.Second)

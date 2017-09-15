@@ -133,12 +133,8 @@ type RedisSettings struct {
 	TestOnBorrowPeriod    time.Duration
 }
 
-// RedisClient contains redis client
-type RedisClient struct {
-	xredisClient *xredis.Client
-}
-
-func NewRedisClient(options ...RedisOption) *RedisClient {
+// NewRedisCache creates a new redis client
+func NewRedisCache(options ...RedisOption) *RedisCache {
 	settings := &RedisSettings{}
 	for _, option := range options {
 		option(settings)
@@ -161,5 +157,44 @@ func NewRedisClient(options ...RedisOption) *RedisClient {
 		TlsSkipVerify:         settings.TlsSkipVerify,
 		TestOnBorrowPeriod:    settings.TestOnBorrowPeriod,
 	}
-	return &RedisClient{xredisClient: xredis.SetupClient(xredisOptions)}
+	return &RedisCache{client: xredis.SetupClient(xredisOptions)}
+}
+
+// RedisCache contains redis client
+type RedisCache struct {
+	client *xredis.Client
+}
+
+// Get a value by key
+func (c *RedisCache) Get(key string) (string, bool, error) {
+	return c.client.Get(key)
+}
+
+// Set a key value pair
+func (c *RedisCache) Set(key string, value string, timeout time.Duration) error {
+	seconds := int64(timeout.Seconds())
+	if seconds == 0 {
+		_, err := c.client.Set(key, value)
+		return err
+	}
+
+	_, err := c.client.SetEx(key, value, seconds)
+	return err
+}
+
+// Remove a key
+func (c *RedisCache) Remove(key string) error {
+	_, err := c.client.Del(key)
+	return err
+}
+
+// Ping to test connectivity
+func (c *RedisCache) Ping() error {
+	_, err := c.client.Ping()
+	return err
+}
+
+// Close to close resources
+func (c *RedisCache) Close() error {
+	return c.client.Close()
 }

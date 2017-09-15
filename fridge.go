@@ -32,14 +32,14 @@ const (
 const (
 	empty                 = ""
 	eventsTopic           = "fridge_events"
-	invalidDurationsError = "Invalid 'best by' and 'use by' durations"
+	invalidDurationsError = "invalid 'best by' and 'use by' durations"
 )
 
 // NewClient returns a client
-func NewClient(redisClient *RedisClient, options ...DefaultsOption) *Client {
+func NewClient(cache Cache, options ...DefaultsOption) *Client {
 	client := &Client{
 		defaults: newDefaults(options...),
-		dao:      newDao(redisClient),
+		dao:      newDao(cache),
 	}
 
 	bus := eventbus.NewClient()
@@ -59,7 +59,25 @@ func NewClient(redisClient *RedisClient, options ...DefaultsOption) *Client {
 	return client
 }
 
-// Fridge event
+// Cache is a Fridge cache interface
+type Cache interface {
+	// Get a value by key
+	Get(key string) (string, bool, error)
+
+	// Set a key value pair
+	Set(key string, value string, timeout time.Duration) error
+
+	// Remove a key
+	Remove(key string) error
+
+	// Ping to test connectivity
+	Ping() error
+
+	// Close to close resources
+	Close() error
+}
+
+// Event is a Fridge event
 type Event struct {
 	Key  string
 	Type string
@@ -85,7 +103,7 @@ func (c *Client) Put(key string, value string, options ...StorageOption) error {
 		return err
 	}
 
-	err = c.dao.Set(key, value, storageDetails.GetUseByInSeconds())
+	err = c.dao.Set(key, value, storageDetails.UseBy)
 	if err != nil {
 		return err
 	}

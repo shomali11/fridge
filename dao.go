@@ -3,7 +3,6 @@ package fridge
 import (
 	"fmt"
 	"github.com/shomali11/util/conversions"
-	"github.com/shomali11/xredis"
 	"time"
 )
 
@@ -13,18 +12,17 @@ const (
 
 // Dao controls access to redis
 type Dao struct {
-	xredisClient *xredis.Client
+	cache Cache
 }
 
 // Get retrieves an item
 func (d *Dao) Get(key string) (string, bool, error) {
-	return d.xredisClient.Get(key)
+	return d.cache.Get(key)
 }
 
 // Set stores a value
-func (d *Dao) Set(key string, value string, timeout int64) error {
-	_, err := d.xredisClient.SetEx(key, value, timeout)
-	return err
+func (d *Dao) Set(key string, value string, timeout time.Duration) error {
+	return d.cache.Set(key, value, timeout)
 }
 
 // SetStorageDetails stores a key's defaults
@@ -36,14 +34,13 @@ func (d *Dao) SetStorageDetails(key string, storageDetails *StorageDetails) erro
 	}
 
 	configKey := fmt.Sprintf(configKeyFormat, key)
-	_, err = d.xredisClient.Set(configKey, timestampString)
-	return err
+	return d.cache.Set(configKey, timestampString, 0)
 }
 
 // GetStorageDetails retrieves a key's storage details
 func (d *Dao) GetStorageDetails(key string) (*StorageDetails, bool, error) {
 	configKey := fmt.Sprintf(configKeyFormat, key)
-	configString, found, err := d.xredisClient.Get(configKey)
+	configString, found, err := d.cache.Get(configKey)
 	if err != nil {
 		return nil, false, err
 	}
@@ -63,21 +60,23 @@ func (d *Dao) GetStorageDetails(key string) (*StorageDetails, bool, error) {
 // Remove an item
 func (d *Dao) Remove(key string) error {
 	timestampKey := fmt.Sprintf(configKeyFormat, key)
-	_, err := d.xredisClient.Del(key, timestampKey)
-	return err
+	err := d.cache.Remove(key)
+	if err != nil {
+		return err
+	}
+	return d.cache.Remove(timestampKey)
 }
 
 // Ping pings redis
 func (d *Dao) Ping() error {
-	_, err := d.xredisClient.Ping()
-	return err
+	return d.cache.Ping()
 }
 
 // Close closes resources
 func (d *Dao) Close() error {
-	return d.xredisClient.Close()
+	return d.cache.Close()
 }
 
-func newDao(redisClient *RedisClient) *Dao {
-	return &Dao{xredisClient: redisClient.xredisClient}
+func newDao(cache Cache) *Dao {
+	return &Dao{cache: cache}
 }
