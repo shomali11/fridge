@@ -176,7 +176,8 @@ Output
 
 ## Example 4
 
-Using `NewSentinelCache` with modified settings for a redis sentinel client
+Using `NewSentinelCache` with modified settings for a redis sentinel client. _Note: `NewSentinelCache` creates an redis sentinel client that implements the `Cache` interface_
+
 
 ```go
 package main
