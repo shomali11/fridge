@@ -6,7 +6,10 @@ import (
 )
 
 func main() {
-	redisCache := fridge.NewRedisCache(fridge.WithHost("localhost"), fridge.WithPort(6379))
+	redisCache := fridge.NewRedisCache(
+		fridge.WithHost("localhost"),
+		fridge.WithPort(6379))
+
 	client := fridge.NewClient(redisCache)
 	defer client.Close()
 

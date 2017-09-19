@@ -6,12 +6,12 @@ import (
 )
 
 func main() {
-	redisCache := fridge.NewRedisCache()
+	redisCache := fridge.NewSentinelCache(
+		fridge.WithSentinelAddresses([]string{"localhost:26379"}),
+		fridge.WithSentinelMasterName("master"))
+
 	client := fridge.NewClient(redisCache)
 	defer client.Close()
 
-	fmt.Println(client.Put("food", "Pizza"))
-	fmt.Println(client.Get("food"))
-	fmt.Println(client.Remove("food"))
-	fmt.Println(client.Get("food"))
+	fmt.Println(client.Ping())
 }

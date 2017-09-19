@@ -157,7 +157,10 @@ import (
 )
 
 func main() {
-	redisCache := fridge.NewRedisCache(fridge.WithHost("localhost"), fridge.WithPort(6379))
+	redisCache := fridge.NewRedisCache(
+		fridge.WithHost("localhost"), 
+		fridge.WithPort(6379))
+		
 	client := fridge.NewClient(redisCache)
 	defer client.Close()
 
@@ -172,6 +175,36 @@ Output
 ```
 
 ## Example 4
+
+Using `NewSentinelCache` with modified settings for a redis sentinel client
+
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/shomali11/fridge"
+)
+
+func main() {
+	redisCache := fridge.NewSentinelCache(
+		fridge.WithSentinelAddresses([]string{"localhost:26379"}),
+		fridge.WithSentinelMasterName("master"))
+
+	client := fridge.NewClient(redisCache)
+	defer client.Close()
+
+	fmt.Println(client.Ping())
+}
+```
+
+Output
+
+```
+<nil>
+```
+
+## Example 5
 
 Using `Put`, `Get` & `Remove` to show how to put, get and remove an item.
 _Note: That we are using a default client that has a default Best By of 1 hour and Use By of 1 Day for all keys_
@@ -205,7 +238,7 @@ Pizza true <nil>
  false <nil>
 ```
 
-## Example 5
+## Example 6
 
 Using `WithDefaultDurations` to override the default Best By and Use By durations for all keys
 
@@ -247,7 +280,7 @@ Pizza true <nil>
 <nil>
 ```
 
-## Example 6
+## Example 7
 
 Using `Put` to show how to put an item and override that item's durations.
 
@@ -289,7 +322,7 @@ Pizza true <nil>
 <nil>
 ```
 
-## Example 7
+## Example 8
 
 Using `Get` to show how to retrieve an item while providing a restocking mechanism.
 
@@ -335,7 +368,7 @@ Hot Pizza true <nil>
 <nil>
 ```
 
-## Example 8
+## Example 9
 
 Using `HandleEvent` to pass a callback to access the stream of events generated
 

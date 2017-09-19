@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// RedisOption an option for a storage
+// RedisOption an option for a redis option
 type RedisOption func(*RedisSettings)
 
 // WithHost sets redis host
@@ -140,7 +140,7 @@ func NewRedisCache(options ...RedisOption) *RedisCache {
 		option(settings)
 	}
 
-	xredisOptions := &xredis.Options{
+	redisOptions := &xredis.Options{
 		Host:                  settings.Host,
 		Port:                  settings.Port,
 		Password:              settings.Password,
@@ -157,7 +157,7 @@ func NewRedisCache(options ...RedisOption) *RedisCache {
 		TlsSkipVerify:         settings.TlsSkipVerify,
 		TestOnBorrowPeriod:    settings.TestOnBorrowPeriod,
 	}
-	return &RedisCache{client: xredis.SetupClient(xredisOptions)}
+	return &RedisCache{client: xredis.SetupClient(redisOptions)}
 }
 
 // RedisCache contains redis client
