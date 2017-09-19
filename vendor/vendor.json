@@ -3,6 +3,12 @@
 	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "Ba9moJKp0ssS+S7v2Zhl0zVmV6U=",
+			"path": "github.com/FZambia/go-sentinel",
+			"revision": "7ec87ec3f92e789de83d4d4a17a5cd069bd2882f",
+			"revisionTime": "2017-09-08T19:10:20Z"
+		},
+		{
 			"checksumSHA1": "mrz/kicZiUaHxkyfvC/DyQcr8Do=",
 			"path": "github.com/davecgh/go-spew/spew",
 			"revision": "adab96458c51a58dc1783b3335dcce5461522e75",
@@ -111,10 +117,10 @@
 			"revisionTime": "2017-07-27T00:40:33Z"
 		},
 		{
-			"checksumSHA1": "K64Ux7PLm6OCzlPsKDcSnjVqRsI=",
+			"checksumSHA1": "TzOsQlpmWOsoZpDf9yUhG2+pRyg=",
 			"path": "github.com/shomali11/xredis",
-			"revision": "5b63e33dbef8e95a800e2fd71f364d74577017e6",
-			"revisionTime": "2017-07-28T23:15:22Z"
+			"revision": "56f12cc7d4503a781890654c60cf41c7be2c52be",
+			"revisionTime": "2017-09-19T02:08:26Z"
 		},
 		{
 			"checksumSHA1": "J+ppEq6nYMKxhB9+c+MD1x9UwSc=",
