@@ -17,7 +17,6 @@ govendor fetch github.com/shomali11/eventbus
 ## Dependencies
 
 * `maps` [github.com/shomali11/maps](https://github.com/shomali11/maps)
-* `util` [github.com/shomali11/util](https://github.com/shomali11/util)
 
 # Examples
 
