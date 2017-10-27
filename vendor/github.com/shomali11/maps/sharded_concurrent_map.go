@@ -1,7 +1,7 @@
 package maps
 
 import (
-	"github.com/shomali11/util/hashes"
+	"github.com/shomali11/util/xhashes"
 )
 
 // NewShardedConcurrentMap creates a new sharded concurrent map
@@ -46,10 +46,17 @@ func (c *ShardedConcurrentMap) Remove(key string) {
 	concurrentMap.Remove(key)
 }
 
-// Contains concurrent contains in map
-func (c *ShardedConcurrentMap) Contains(key string) bool {
+// ContainsKey concurrent contains key in map
+func (c *ShardedConcurrentMap) ContainsKey(key string) bool {
 	_, ok := c.Get(key)
 	return ok
+}
+
+// ContainsEntry concurrent contains entry in map
+func (c *ShardedConcurrentMap) ContainsEntry(key string, value interface{}) bool {
+	shard := c.getShard(key)
+	concurrentMap := c.concurrentMaps[shard]
+	return concurrentMap.ContainsEntry(key, value)
 }
 
 // Size concurrent size of map
@@ -88,5 +95,5 @@ func (c *ShardedConcurrentMap) Clear() {
 }
 
 func (c *ShardedConcurrentMap) getShard(key string) uint32 {
-	return hashes.FNV32(key) % uint32(c.shards)
+	return xhashes.FNV32(key) % uint32(c.shards)
 }

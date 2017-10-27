@@ -38,10 +38,16 @@ func (c *ConcurrentMap) Remove(key string) {
 	c.lock.Unlock()
 }
 
-// Contains concurrent contains in map
-func (c *ConcurrentMap) Contains(key string) bool {
+// ContainsKey concurrent contains key in map
+func (c *ConcurrentMap) ContainsKey(key string) bool {
 	_, ok := c.Get(key)
 	return ok
+}
+
+// ContainsEntry concurrent contains entry in map
+func (c *ConcurrentMap) ContainsEntry(key string, value interface{}) bool {
+	existingValue, ok := c.Get(key)
+	return ok && existingValue == value
 }
 
 // Size concurrent size of map

@@ -2,7 +2,7 @@ package fridge
 
 import (
 	"fmt"
-	"github.com/shomali11/util/conversions"
+	"github.com/shomali11/util/xconversions"
 	"time"
 )
 
@@ -28,7 +28,7 @@ func (d *Dao) Set(key string, value string, timeout time.Duration) error {
 // SetStorageDetails stores a key's defaults
 func (d *Dao) SetStorageDetails(key string, storageDetails *StorageDetails) error {
 	storageDetails.Timestamp = time.Now().UTC()
-	timestampString, err := conversions.Stringify(storageDetails)
+	timestampString, err := xconversions.Stringify(storageDetails)
 	if err != nil {
 		return err
 	}
@@ -50,7 +50,7 @@ func (d *Dao) GetStorageDetails(key string) (*StorageDetails, bool, error) {
 	}
 
 	var storageDetails *StorageDetails
-	err = conversions.Structify(configString, &storageDetails)
+	err = xconversions.Structify(configString, &storageDetails)
 	if err != nil {
 		return nil, false, err
 	}

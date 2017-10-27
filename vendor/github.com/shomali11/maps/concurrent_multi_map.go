@@ -50,10 +50,25 @@ func (c *ConcurrentMultiMap) Remove(key string) {
 	c.lock.Unlock()
 }
 
-// Contains concurrent contains in map
-func (c *ConcurrentMultiMap) Contains(key string) bool {
+// ContainsKey concurrent contains key in map
+func (c *ConcurrentMultiMap) ContainsKey(key string) bool {
 	_, ok := c.Get(key)
 	return ok
+}
+
+// ContainsEntry concurrent contains entry in map
+func (c *ConcurrentMultiMap) ContainsEntry(key string, value interface{}) bool {
+	existingValues, ok := c.Get(key)
+	if !ok {
+		return false
+	}
+
+	for _, existingValue := range existingValues {
+		if existingValue == value {
+			return true
+		}
+	}
+	return false
 }
 
 // Size concurrent size of map
