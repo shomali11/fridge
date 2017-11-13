@@ -23,7 +23,7 @@ func main() {
 			fmt.Println("Sigh. It has expired!")
 		case fridge.NotFound:
 			fmt.Println("Oops! Did not find it.")
-		case fridge.Refresh:
+		case fridge.Restock:
 			fmt.Println("Yay! Getting a new one!")
 		case fridge.OutOfStock:
 			fmt.Println("Oh no! It is out of stock.")

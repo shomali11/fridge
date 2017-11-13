@@ -3,6 +3,7 @@ package fridge
 import (
 	"errors"
 	"github.com/shomali11/eventbus"
+	"github.com/shomali11/parallelizer"
 	"time"
 )
 
@@ -19,8 +20,8 @@ const (
 	// NotFound is when an item was not found due to being removed or was never stored before
 	NotFound = "NOT_FOUND"
 
-	// Refresh is when an item was restocked with a fresher one
-	Refresh = "REFRESH"
+	// Restock is when an item was restocked with a fresher one
+	Restock = "RESTOCK"
 
 	// OutOfStock is when an item needs restocking, but no restocking function was provided
 	OutOfStock = "OUT_OF_STOCK"
@@ -40,6 +41,7 @@ func NewClient(cache Cache, options ...DefaultsOption) *Client {
 	client := &Client{
 		defaults: newDefaults(options...),
 		dao:      newDao(cache),
+		group:    parallelizer.NewGroup(),
 	}
 
 	bus := eventbus.NewClient()
@@ -88,6 +90,7 @@ type Client struct {
 	defaults    *Defaults
 	dao         *Dao
 	bus         *eventbus.Client
+	group       *parallelizer.Group
 	handleEvent func(event *Event)
 }
 
@@ -144,7 +147,9 @@ func (c *Client) Get(key string, options ...RetrievalOption) (string, bool, erro
 	if now.Before(storageDetails.Timestamp.Add(storageDetails.UseBy)) {
 		c.publish(key, Cold)
 		if !storageDetails.Restocking {
-			go c.restock(key, cachedValue, storageDetails, restock)
+			c.group.Add(func() {
+				c.restock(key, cachedValue, storageDetails, restock)
+			})
 		}
 		return cachedValue, true, nil
 	}
@@ -197,7 +202,7 @@ func (c *Client) restock(key string, cachedValue string, storageDetails *Storage
 		return empty, false, err
 	}
 
-	c.publish(key, Refresh)
+	c.publish(key, Restock)
 
 	bestBy, useBy := storageDetails.BestBy, storageDetails.UseBy
 	err = c.Put(key, freshValue, WithDurations(bestBy, useBy))
