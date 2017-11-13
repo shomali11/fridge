@@ -147,7 +147,7 @@ func (c *Client) Get(key string, options ...RetrievalOption) (string, bool, erro
 	if now.Before(storageDetails.Timestamp.Add(storageDetails.UseBy)) {
 		c.publish(key, Cold)
 		if !storageDetails.Restocking {
-			c.group.Add(func() {
+			go c.group.Add(func() {
 				c.restock(key, cachedValue, storageDetails, restock)
 			})
 		}
