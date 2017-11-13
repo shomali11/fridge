@@ -171,6 +171,7 @@ func (c *Client) Ping() error {
 // Close closes resources
 func (c *Client) Close() error {
 	c.bus.Close()
+	c.group.Close()
 	return c.dao.Close()
 }
 
