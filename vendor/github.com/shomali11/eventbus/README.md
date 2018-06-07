@@ -6,14 +6,6 @@ An event bus to facilitate publishing and subscribing to events via topics
 
 * Non blocking publishing of events
 
-## Usage
-
-Using `govendor` [github.com/kardianos/govendor](https://github.com/kardianos/govendor):
-
-```
-govendor fetch github.com/shomali11/eventbus
-```
-
 ## Dependencies
 
 * `maps` [github.com/shomali11/maps](https://github.com/shomali11/maps)

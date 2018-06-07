@@ -30,14 +30,6 @@ The longer the value stays in the cache, the better the chances are to retrieve 
 
 The challenge, of course, is to keep the value in the cache "fresh".
 
-## Usage
-
-Using `govendor` [github.com/kardianos/govendor](https://github.com/kardianos/govendor):
-
-```
-govendor fetch github.com/shomali11/fridge
-```
-
 ## Dependencies
 
 * `parallelizer` [github.com/shomali11/parallelizer](https://github.com/shomali11/parallelizer)

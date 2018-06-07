@@ -17,14 +17,6 @@ A collection of various maps with concurrent versions that supports concurrent r
 
 _Note: Sharded versions provides improved performance by reducing the number of write locks_
 
-## Usage
-
-Using `govendor` [github.com/kardianos/govendor](https://github.com/kardianos/govendor):
-
-```
-govendor fetch github.com/shomali11/maps
-```
-
 ## Dependencies
 
 * `util` [github.com/shomali11/util](https://github.com/shomali11/util)

@@ -2,13 +2,14 @@
 
 Simplifies creating a pool of workers that execute jobs in parallel
 
-## Usage
+## Features
 
-Using `govendor` [github.com/kardianos/govendor](https://github.com/kardianos/govendor):
-
-```
-govendor fetch github.com/shomali11/parallelizer
-```
+* Easy to use
+* Context Support
+* Customizable Pool Size
+    * Default number of workers is 10
+* Customizable Job Queue Size
+    * Default size is 100
 
 # Examples
 
@@ -58,13 +59,14 @@ Error: <nil>
 
 ## Example 2
 
-Running multiple slow function calls in parallel with a short timeout.
+Running multiple slow function calls in parallel with a context with a short timeout.
 _Note: The timeout will not kill the routines. It will just stop waiting for them to finish_
 
 ```go
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/shomali11/parallelizer"
 	"time"
@@ -86,7 +88,10 @@ func main() {
 		fmt.Println("Finished work 2")
 	})
 
-	err := group.Wait(parallelizer.WithTimeout(time.Second))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	err := group.Wait(parallelizer.WithContext(ctx))
 
 	fmt.Println("Done")
 	fmt.Printf("Error: %v", err)
@@ -100,7 +105,7 @@ Output:
 
 ```text
 Done
-Error: timeout
+Error: context deadline exceeded
 Finished work 2
 Finished work 1
 ```
