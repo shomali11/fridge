@@ -14,8 +14,6 @@ func TestStorageDetails_New(t *testing.T) {
 
 	assert.Equal(t, storageDetails.BestBy, time.Second)
 	assert.Equal(t, storageDetails.UseBy, 2*time.Second)
-
-	assert.Equal(t, storageDetails.GetUseByInSeconds(), int64(2))
 }
 
 func TestStorageDetails_Defaults(t *testing.T) {
@@ -28,8 +26,6 @@ func TestStorageDetails_Defaults(t *testing.T) {
 
 	assert.Equal(t, storageDetails.BestBy, time.Minute)
 	assert.Equal(t, storageDetails.UseBy, 2*time.Minute)
-
-	assert.Equal(t, storageDetails.GetUseByInSeconds(), int64(120))
 }
 
 func TestStorageDetails_Override(t *testing.T) {
@@ -42,6 +38,4 @@ func TestStorageDetails_Override(t *testing.T) {
 
 	assert.Equal(t, storageDetails.BestBy, time.Second)
 	assert.Equal(t, storageDetails.UseBy, 2*time.Second)
-
-	assert.Equal(t, storageDetails.GetUseByInSeconds(), int64(2))
 }
