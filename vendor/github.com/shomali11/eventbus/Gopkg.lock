@@ -2,38 +2,51 @@
 
 
 [[projects]]
+  digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
-  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
-  version = "v1.1.0"
+  pruneopts = "UT"
+  revision = "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
+  version = "v1.1.1"
 
 [[projects]]
+  digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
+  pruneopts = "UT"
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
   version = "v1.0.0"
 
 [[projects]]
   branch = "master"
+  digest = "1:2bbd6fe65177fbb308da9f35cfad1b4f04e8ec5b2fa726a84ba1e3d9b3ac9048"
   name = "github.com/shomali11/maps"
   packages = ["."]
+  pruneopts = "UT"
   revision = "ed4929916122ac37e22cc02188145b461375657c"
 
 [[projects]]
   branch = "master"
+  digest = "1:f98b6aa1cd0cc6f306b76a95d720d58013507ae2587ada1810c38986bf60bb89"
   name = "github.com/shomali11/util"
   packages = ["xhashes"]
+  pruneopts = "UT"
   revision = "e0f70fd665ff79ac4fb200af18176bebcb5fcae3"
 
 [[projects]]
+  digest = "1:972c2427413d41a1e06ca4897e8528e5a1622894050e2f527b38ddf0f343f759"
   name = "github.com/stretchr/testify"
   packages = ["assert"]
-  revision = "12b6f73e6084dad08a7c6e575284b177ecafbc71"
-  version = "v1.2.1"
+  pruneopts = "UT"
+  revision = "ffdc059bfe9ce6a4e144ba849dbedead332c6053"
+  version = "v1.3.0"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e3d471ef37701845b9d72a3ec375576abd5f95926a2d206e33f6457e755c134c"
+  input-imports = [
+    "github.com/shomali11/maps",
+    "github.com/stretchr/testify/assert",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1

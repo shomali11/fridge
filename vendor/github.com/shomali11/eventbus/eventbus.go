@@ -56,14 +56,10 @@ type Client struct {
 func (c *Client) Publish(topic string, value interface{}) {
 	event := &Event{Topic: topic, Value: value}
 
-	// Attempt to publish an event to the channel, if the channel's buffer was full
-	// Create a go routine to push the event to the channel (which will block until a read on the channel occurs)
+	// Attempt to publish an event to the channel, if the channel's buffer was full, discard
 	select {
 	case c.events <- event:
 	default:
-		go func(event *Event) {
-			c.events <- event
-		}(event)
 	}
 }
 
