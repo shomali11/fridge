@@ -1,4 +1,4 @@
-# fridge [![Go Report Card](https://goreportcard.com/badge/github.com/shomali11/fridge)](https://goreportcard.com/report/github.com/shomali11/fridge) [![GoDoc](https://godoc.org/github.com/shomali11/fridge?status.svg)](https://godoc.org/github.com/shomali11/fridge) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+# fridge [![Build Status](https://travis-ci.com/shomali11/fridge.svg?branch=master)](https://travis-ci.com/shomali11/fridge) [![Go Report Card](https://goreportcard.com/badge/github.com/shomali11/fridge)](https://goreportcard.com/report/github.com/shomali11/fridge) [![GoDoc](https://godoc.org/github.com/shomali11/fridge?status.svg)](https://godoc.org/github.com/shomali11/fridge) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 `fridge` is a layer applied on top of a cache that makes interacting with it similar to interacting with a fridge.
 Items are tagged with a "Best By" and "Use By" timestamps, stored, restocked and retrieved.
